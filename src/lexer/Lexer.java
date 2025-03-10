@@ -30,6 +30,7 @@ public class Lexer {
         keywordMap.put("true", TokenType.BOOLEAN_LITERALS);
         keywordMap.put("false", TokenType.BOOLEAN_LITERALS);
         keywordMap.put("print", TokenType.PRINT);
+        keywordMap.put("println", TokenType.PRINTLN);
         keywordMap.put("var", TokenType.VAR);
     }
     
@@ -104,7 +105,24 @@ public class Lexer {
                 advance();
                 StringBuilder str = new StringBuilder();
                 while (position < sourceCode.length() && sourceCode.charAt(position) != '"'){
-                    str.append(sourceCode.charAt(position));
+                    if (sourceCode.charAt(position) == '\\'){
+                        advance();
+                        if (position < sourceCode.length()){
+                            char escapeChar = sourceCode.charAt(position);
+                            switch (escapeChar){
+                                case 'n': str.append('\n'); break;
+                                case 't': str.append('\t'); break;
+                                case 'r': str.append('\r'); break;
+                                case '"': str.append('"'); break;
+                                case '\\': str.append('\\'); break;
+                                default:
+                                    System.err.println("ERROR: Invalid escape sequence \\" + escapeChar);
+                                    break;
+                            }
+                        }
+                    } else {
+                        str.append(sourceCode.charAt(position));
+                    }
                     advance();
                 }
                 if (position >= sourceCode.length()){
@@ -115,32 +133,40 @@ public class Lexer {
                 tokens.add(new Token(TokenType.STRING_LITERALS, str.toString()));
             } else if (current == '\''){
                 advance();
-                if (position >= sourceCode.length() || sourceCode.charAt(position) == '\''){
-                    System.err.println("ERROR: Empty Character literal");
-                } else {
-                    char charValue = sourceCode.charAt(position);
+                StringBuilder charLiteral = new StringBuilder();
+
+                if (position < sourceCode.length() && sourceCode.charAt(position) == '\\'){
                     advance();
-                    if (position <  sourceCode.length()&& sourceCode.charAt(position) == '\'') {
-                        tokens.add(new Token(TokenType.CHAR_LITERALS, Character.toString(charValue)));
-                        advance();
-                    } else {
-                        System.err.println("ERROR: Unclosed Character literal");
+                    if (position < sourceCode.length()){
+                        char escapeChar = sourceCode.charAt(position);
+                        switch (escapeChar){
+                            case 'n': charLiteral.append('\n'); break;
+                            case 't': charLiteral.append('\t'); break;
+                            case 'r': charLiteral.append('\r'); break;
+                            case '\'': charLiteral.append('\''); break;
+                            case '\\': charLiteral.append('\\'); break;
+                            default:
+                                System.err.println("ERROR: Invalid escape sequence \\" + escapeChar);
+                                break;
+                        }
                     }
-                }
-            } else  if (current == '"'){
-                StringBuilder stringLiteral = new StringBuilder();
-                advance();
-
-                while (current != '"' && current != '\0'){
-                    stringLiteral.append(current);
-                    advance();
-                }
-
-                if (current == '"'){
-                    advance();
-                    tokens.add(new Token(TokenType.STRING_LITERALS, stringLiteral.toString()));
+                } else if (position < sourceCode.length()){
+                    charLiteral.append(sourceCode.charAt(position));
                 } else {
-                    System.err.println("ERROR: Unterminated string literal");
+                    System.err.println("ERROR: Empty Character literal");
+                }
+                
+                advance();
+                if (position < sourceCode.length() && sourceCode.charAt(position) == '\'') {
+                    if (charLiteral.length() == 0) {
+                        System.err.println("ERROR: Empty character literal");
+                    }
+                    //can add .trim() just in case
+                    System.out.println("DEBUG: Char Literal '" + charLiteral.toString() + "' ASCII: " + (int) charLiteral.charAt(0));
+                    tokens.add(new Token(TokenType.CHAR_LITERALS, charLiteral.toString()));
+                    advance();
+                } else {
+                    System.err.println("ERROR: Unclosed Character literal");
                 }
             } else if (current == ';'){
                 tokens.add(new Token(TokenType.SEMICOLON, ";"));
@@ -152,11 +178,14 @@ public class Lexer {
                         if (peek() == '='){
                             tokens.add(new Token(TokenType.PLUS_EQUALS, "+="));
                             advance();
+                            advance();
                         } else if (peek() == '+'){
                             tokens.add(new Token(TokenType.INCREMENT, "++"));
                             advance();
+                            advance();
                         } else {
                             tokens.add(new Token(TokenType.PLUS, "+"));
+                            advance();
                         }
                         break;
 
@@ -164,11 +193,14 @@ public class Lexer {
                         if (peek() == '='){
                             tokens.add(new Token(TokenType.MINUS_EQUALS, "-="));
                             advance();
+                            advance();
                         } else if (peek() == '-'){
                             tokens.add(new Token(TokenType.DECREMENT, "--"));
                             advance();
+                            advance();
                         } else {
                             tokens.add(new Token(TokenType.MINUS, "-"));
+                            advance();
                         }
                         break;
 
@@ -176,8 +208,10 @@ public class Lexer {
                         if (peek() == '='){
                             tokens.add(new Token(TokenType.EQUALS, "=="));
                             advance();
+                            advance();
                         } else {
                             tokens.add(new Token(TokenType.ASSIGN, "="));
+                            advance();
                         }
                         break;
 
@@ -185,8 +219,10 @@ public class Lexer {
                         if (peek() == '='){
                             tokens.add(new Token(TokenType.NOT_EQUALS, "!="));
                             advance();
+                            advance();
                         } else {
                             tokens.add(new Token(TokenType.NOT, "!"));
+                            advance();
                         }
                         break;
 
@@ -194,8 +230,10 @@ public class Lexer {
                         if (peek() == '&'){
                             tokens.add(new Token(TokenType.AND, "&&"));
                             advance();
+                            advance();
                         } else {
                             tokens.add(new Token(TokenType.BITWISE_AND, "&"));
+                            advance();
                         }
                         break;
 
@@ -203,8 +241,10 @@ public class Lexer {
                         if (peek() == '|'){
                             tokens.add(new Token(TokenType.OR, "||"));
                             advance();
+                            advance();
                         } else {
                             tokens.add(new Token(TokenType.BITWISE_OR, "|"));
+                            advance();
                         }
                         break;
 
@@ -212,8 +252,10 @@ public class Lexer {
                         if (peek() == '='){
                             tokens.add(new Token(TokenType.MULT_EQUALS, "*="));
                             advance();
+                            advance();
                         } else {
                             tokens.add(new Token(TokenType.MULTIPLY, "*"));
+                            advance();
                         }
                         break;
 
@@ -221,11 +263,13 @@ public class Lexer {
                         if (peek() == '='){
                             tokens.add(new Token(TokenType.DIV_EQUALS, "/="));
                             advance();
+                            advance();
                         } else if (peek() == '/'){
                             while (position < sourceCode.length() && sourceCode.charAt(position) != '\n'){
                                 advance();
                             }
                             tokens.add(new Token(TokenType.DIVIDE, "/"));
+                            advance();
                         } else if (peek() == '*') {
                             advance();
                             boolean closed = false;
@@ -243,6 +287,7 @@ public class Lexer {
                             }
                         } else {
                             tokens.add(new Token(TokenType.DIVIDE, "/"));
+                            advance();
                         }
                         break;
 
@@ -251,18 +296,27 @@ public class Lexer {
                         if (peek() == '='){
                             tokens.add(new Token(TokenType.LESS_THAN_EQUALS, "<="));
                             advance();
+                            advance();
                         } else {
                             tokens.add(new Token(TokenType.LESS_THAN, "<"));
+                            advance();
                         }
                         break;
                     //greater than
                     case '>':
-                        tokens.add(peek() == '=' ? new Token(TokenType.GREATER_THAN_EQUALS, ">=") : new Token(TokenType.GREATER_THAN, ">"));
-                        if (peek() == '=') advance();
+                        if (peek() == '=') {
+                            tokens.add(new Token(TokenType.GREATER_THAN_EQUALS, ">="));
+                            advance();
+                            advance();
+                        } else {
+                            tokens.add(new Token(TokenType.GREATER_THAN, ">"));
+                            advance();
+                        }
                         break;
 
                     case '%':
                         tokens.add(new Token(TokenType.MOD, "%"));
+                        advance();
                         break;
 
                     //parenthesis & brackets
@@ -293,7 +347,22 @@ public class Lexer {
     }
 
     public static void main(String[] args) {
-        String sourceCode = " String s = \"GGWEPH21aha Hello World\"; 'C'; 719ud2n1; int x = 42;\nfloat y = 3.14;\nchar c = 'A';\nif (x < y) { return; }";
+
+        String sourceCode = "boolean flag = true; float pi = 3.1415;\n"
+        + "char symbol = '\\n';\n"
+        + "char y = '\\'';"
+        + "char x = 'a';"
+        + "char c = '\n';"
+        + "if (flag && pi >= 3.0) {\n"
+        + "    println(\"Valid input\");\n"
+        + "} else {\n"
+        + "    print(\"Invalid input\");\n"
+        + "}\n"
+        + "// Single line comment\n"
+        + "/* Multi-line \n"
+        + "   comment block */\n"
+        + "x /= 2 + 5; y -= 10;\n"
+        + "for (int i = 0; i < 10; i++) { print(i); }";
 
         Lexer lexer = new Lexer(sourceCode);
         lexer.tokenize();

@@ -75,6 +75,10 @@ class Parser{
         }
     }
 
+    public Stmt parseIf(){
+
+    }
+
     public Expr parseAssignment(){
         Token curr = peek();
         if (curr.getType() == TokenType.IDENTIFIER){
