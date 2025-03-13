@@ -10,10 +10,14 @@ public class Lexer {
     int position;
     int lineNumber;
     int colNumber;
-    List<Token> tokens = new ArrayList<>();
+    private List<Token> tokens = new ArrayList<>();
     
     private static final Map<String, TokenType> keywordMap = new HashMap<>();
     
+    public List<Token> getTokens() {
+    return tokens;
+}
+
     static{
         keywordMap.put("if", TokenType.IF);
         keywordMap.put("else", TokenType.ELSE);
@@ -401,22 +405,9 @@ public class Lexer {
 
     public static void main(String[] args) {
 
-        String sourceCode = "boolean flag = true; float pi = 3.1415;\n"
-        + "char symbol = '\\n';\n"
-        + "char y = '\\'';"
-        + "char x = 'a';"
-        + "char c = '\n';"
-        + "int i = 1 / 17"
-        + "if (flag && pi >= 3.0) {\n"
-        + "    println(\"Valid input\");\n"
-        + "} else {\n"
-        + "    print(\"Invalid input\");\n"
-        + "}\n"
-        + "// Single line comment\n"
-        + "/* Multi-line \n"
-        + "   comment block */\n"
-        + "x /= 2 + 5; y -= 10;\n"
-        + "for (int i = 0; i < 10; i++) { print(i); }";
+        String sourceCode = "int[] arr = {1, 2, 3, 4};\n"
+             + "int[][] matrix = new int[3][3];\n"
+             + "arr[2] = 42;";
 
         Lexer lexer = new Lexer(sourceCode);
         lexer.tokenize();

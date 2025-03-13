@@ -1,5 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
+
+import lexer.Lexer;
 import lexer.Token;
 import lexer.TokenType;
 
@@ -81,6 +83,13 @@ class Parser{
         return parseAssignment();
     }
 
+    private boolean isType(Token token) {
+        return token.getType() == TokenType.INT ||
+               token.getType() == TokenType.FLOAT ||
+               token.getType() == TokenType.BOOLEAN ||
+               token.getType() == TokenType.CHAR;
+    }
+
     public Stmt parseStatement(){
         Token curr = peek();
 
@@ -90,7 +99,7 @@ class Parser{
             return parseWhile();
         } else if (curr.getType() == TokenType.PRINT){
             return parsePrint();
-        } else if (curr.getType() == TokenType.VAR){
+        } else if (curr.getType() == TokenType.VAR || isType(curr)){
             return parseVarDecleration();
         } else if (curr.getType() == TokenType.LEFT_BRACE){
             return new BlockStmt(parseBlock());
@@ -344,6 +353,11 @@ class Parser{
             consume(TokenType.NUMBER_LITERALS, "Expected number");
             return new LiteralExpr(Double.parseDouble(curr.getValue()));
         }
+        
+        if (curr.getType() == TokenType.FLOAT_LITERALS) {
+            consume(TokenType.FLOAT_LITERALS, "Expected float");
+            return new LiteralExpr(Double.parseDouble(curr.getValue()));
+        }
 
         if (curr.getType() == TokenType.LEFT_PAREN){
             return parseGrouping();
@@ -360,7 +374,14 @@ class Parser{
     }
 
     public static void main(String[] args) {
-        
+        String sourceCode = "float[] nums = {2.5, 3.6, 4.1};" + "arr[2] = 42;";
+
+        Lexer lexer = new Lexer(sourceCode);
+        lexer.tokenize();
+            
+        List<Token> tokens = lexer.getTokens(); // Get the token list
+        Parser parser = new Parser(tokens);     // Pass to parser
+        parser.parseStatement();   
     }
 
     //this is something of a nightmare as of yet. 
