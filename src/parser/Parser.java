@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.List;
 import lexer.Token;
 import lexer.TokenType;
@@ -15,6 +16,27 @@ class Parser{
             return tokens.get(current);
         }
         return null;
+    }
+
+    private Token advance() {
+        if (!isAtEnd()) current++;
+        return previous();
+    }
+    
+    private boolean isAtEnd() {
+        return peek().getType() == TokenType.EOF;
+    }
+    
+    private Token previous() {
+        return tokens.get(current - 1);
+    }
+
+    private boolean match(TokenType expected) {
+        if (peek().getType() == expected) {
+            advance();  // Consume the token
+            return true;
+        }
+        return false;
     }
 
     public Token consume(TokenType expected, String errorMessage){
@@ -70,15 +92,160 @@ class Parser{
             return parsePrint();
         } else if (curr.getType() == TokenType.VAR){
             return parseVarDecleration();
-        } else {
+        } else if (curr.getType() == TokenType.LEFT_BRACE){
+            return new BlockStmt(parseBlock());
+        }else {
             return parseExpressionStatement();
         }
     }
 
-    public Stmt parseIf(){
+    //parsing block statements
+    public List<Stmt> parseBlock() {
+    List<Stmt> statements = new ArrayList<>();
+    
+    consume(TokenType.LEFT_BRACE, "Expected '{' to begin block");
 
+    while (peek() != null && peek().getType() != TokenType.RIGHT_BRACE) {
+        statements.add(parseStatement());
     }
 
+    consume(TokenType.RIGHT_BRACE, "Expected '}' to close block");
+    return statements;
+    }
+
+    //parsing If
+    public Stmt parseIf(){
+        consume(TokenType.IF, "Expected 'If' keyword");
+        consume(TokenType.LEFT_PAREN, "Expected '(' after 'if'");
+        
+        Expr condition = parseExpression();
+
+        consume(TokenType.RIGHT_PAREN, "Expected ')' after '(' and 'if' keyword" );
+    
+        Stmt thenBranch;
+        if (peek().getType() == TokenType.LEFT_BRACE){
+            thenBranch = new BlockStmt(parseBlock());
+        } else {
+            thenBranch = parseStatement();
+        }
+
+        Stmt elseBranch = null;
+        if (peek().getType() == TokenType.ELSE){
+            consume(TokenType.ELSE, "Expected 'else' keyword");
+            if (peek().getType() == TokenType.LEFT_BRACE){
+                elseBranch = new BlockStmt(parseBlock());
+            } else {
+                elseBranch = parseStatement();
+            }
+        }
+
+        return new IfStmt(condition, thenBranch, elseBranch);
+    }
+    
+    //parsing while
+    public Stmt parseWhile(){
+        consume(TokenType.WHILE, "Expected 'while' keyword");
+        consume(TokenType.LEFT_PAREN, "Expected '(' after 'while'");
+        
+        Expr condition = parseExpression();
+        
+        consume(TokenType.RIGHT_PAREN, "Expected ')' after '(' and 'while' keyword" );
+        
+        Stmt body;
+        if (peek().getType() == TokenType.LEFT_BRACE){
+            body = new BlockStmt(parseBlock());
+        } else {
+            body = parseStatement();
+        }
+        
+        return new WhileStmt(condition, body);
+    }
+
+    //parsing print statement
+    public Stmt parsePrint() {
+        consume(peek().getType(), "Expected 'print' or 'println' keyword");
+    
+        consume(TokenType.LEFT_PAREN, "Expected '(' after 'print' or 'println'");
+        Expr expr = parseExpression();
+        consume(TokenType.RIGHT_PAREN, "Expected ')' after expression");
+        consume(TokenType.SEMICOLON, "Expected ';' after print statement");
+    
+        return new PrintStmt(expr);
+    }
+
+    public Stmt parseVarDecleration(){
+        Token type = peek();
+    
+        // Check if it's a valid type keyword or 'var'
+        if (!(type.getType() == TokenType.VAR ||
+              type.getType() == TokenType.INT ||
+              type.getType() == TokenType.FLOAT ||
+              type.getType() == TokenType.BOOLEAN ||
+              type.getType() == TokenType.CHAR)) {
+            throw new RuntimeException("Expected type keyword (int, float, boolean, char, var) in variable declaration.");
+        }
+
+        advance();
+
+        boolean isArray = false;
+        if (peek().getType() == TokenType.LEFT_BRACKET){
+            isArray = true;
+            consume(TokenType.LEFT_BRACKET, "Expected '[' in array declaration");
+            consume(TokenType.RIGHT_BRACKET, "Expected ']' after '[' in array declaration");
+        }
+        
+        Token name = peek();
+        consume(TokenType.IDENTIFIER, "Expected identifier after 'var'");
+        
+        Expr initializer = null;
+        if (peek().getType() == TokenType.ASSIGN){
+            consume(TokenType.ASSIGN, "Expected '=' after variable name");
+            
+            if (peek().getType() == TokenType.LEFT_BRACE){
+                initializer = parseArrayLiteral();
+            } else if (peek().getType() == TokenType.NEW){
+                initializer = parseNewArray();
+            } else {
+                throw new RuntimeException("Invalid array initialization");
+            }
+            // initializer = parseExpression();
+        }
+        consume(TokenType.SEMICOLON, "Expected ';' after variable decleration");
+        return new VarStmt(type, name, initializer, isArray);
+    }
+
+    //parsing arrays
+    private Expr parseArrayLiteral(){
+        List<Expr> elements = new ArrayList<>();
+        consume(TokenType.LEFT_BRACE, "Expected '{' for array literal");
+    
+        if(peek().getType() != TokenType.RIGHT_BRACE){
+            do {
+                elements.add(parseExpression());
+            } while (match(TokenType.COMMA));
+        }
+        consume(TokenType.RIGHT_BRACE, "Expected '}' at the end of array literal");
+        return new ArrayLiteralExpr(elements);
+    }
+
+    private Expr parseNewArray(){
+        consume(TokenType.NEW, "Expected 'new' keyword for array allocation");
+    
+        Token type = peek();
+        consume(peek().getType(), "Expected type in 'new' array allocation");
+        consume(TokenType.LEFT_BRACKET, "Expected '[' in array allocation");
+        Expr size = parseExpression();
+        consume(TokenType.RIGHT_BRACKET, "Expected ']' after array size");
+    
+        return new NewArrayExpr(type, size);
+    }
+
+    public Stmt parseExpressionStatement(){
+        Expr expr = parseExpression();
+        consume(TokenType.SEMICOLON, "Expected ';' statement closes");
+        return new ExprStmt(expr);
+    }
+    
     public Expr parseAssignment(){
         Token curr = peek();
         if (curr.getType() == TokenType.IDENTIFIER){

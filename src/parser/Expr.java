@@ -1,9 +1,11 @@
+import java.util.List;
+
 import lexer.Token;
 import lexer.TokenType;
 
 //for expressions
 
-abstract class Expr {
+abstract class Expr extends ASTNode {
     
 }
 
@@ -108,3 +110,34 @@ class GroupingExpr extends Expr{
         return expr;
     }
 }
+
+class NewArrayExpr extends Expr{
+    private final Token type;
+    private final Expr size;
+
+    public NewArrayExpr(Token type, Expr size) {
+        this.type = type;
+        this.size = size;
+    }
+
+    public Token getType() {
+        return type;
+    }
+
+    public Expr getSize() {
+        return size;
+    }
+}
+
+class ArrayLiteralExpr extends Expr {
+    private final List<Expr> elements;
+
+    public ArrayLiteralExpr(List<Expr> elements) {
+        this.elements = elements;
+    }
+
+    public List<Expr> getElements() {
+        return elements;
+    }
+}
+

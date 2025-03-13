@@ -6,10 +6,10 @@ import java.util.List;
 public abstract class Stmt {
     }
 
-class ExpressionStmt extends Stmt{
+class ExprStmt extends Stmt{
     private final Expr expr;
 
-    public ExpressionStmt(Expr expr){
+    public ExprStmt(Expr expr){
         this.expr = expr;
     }
 
@@ -31,12 +31,20 @@ class PrintStmt extends Stmt{
 }
 
 class VarStmt extends Stmt{
+    private final Token type;
     private final Token name;
     private final Expr initializer;
+    private final boolean isArray;
 
-    public VarStmt(Token name, Expr initializer){
+    public VarStmt(Token type, Token name, Expr initializer, boolean isArray){
+        this.type = type;
         this.name = name;
         this.initializer = initializer;
+        this.isArray = isArray;
+    }
+
+    public Token getType(){
+        return type;
     }
 
     public Token getName(){
@@ -45,6 +53,10 @@ class VarStmt extends Stmt{
 
     public Expr getInitialzer(){
         return initializer;
+    }
+
+    public boolean isArray(){
+        return isArray;
     }
 }
 

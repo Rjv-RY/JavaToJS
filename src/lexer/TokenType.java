@@ -61,6 +61,7 @@ public enum TokenType{
     //special
     WHITESPACE, UNKNOWN, EOF,
     FLOAT,
-    VAR, PRINT, PRINTLN
+    VAR, PRINT, PRINTLN,
+    NEW,
 }
 
