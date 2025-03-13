@@ -12,12 +12,12 @@ public class Lexer {
     int colNumber;
     private List<Token> tokens = new ArrayList<>();
     
+    public List<Token> getTokens() {
+        return tokens;
+    }
+    
     private static final Map<String, TokenType> keywordMap = new HashMap<>();
     
-    public List<Token> getTokens() {
-    return tokens;
-}
-
     static{
         keywordMap.put("if", TokenType.IF);
         keywordMap.put("else", TokenType.ELSE);

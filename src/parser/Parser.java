@@ -359,6 +359,25 @@ class Parser{
             return new LiteralExpr(Double.parseDouble(curr.getValue()));
         }
 
+        if (curr.getType() == TokenType.CHAR_LITERALS) {
+            consume(TokenType.CHAR_LITERALS, "Expected character literal");
+            String value = curr.getValue();
+            if (value.length() != 1) {
+                throw new RuntimeException("Invalid character literal: " + value);
+            }
+            return new LiteralExpr(value.charAt(0));  // Convert to char
+        }
+
+        if (curr.getType() == TokenType.STRING_LITERALS) {
+            consume(TokenType.STRING_LITERALS, "Expected string literal");
+            return new LiteralExpr(curr.getValue());  // Store as a String
+        }
+
+        if (curr.getType() == TokenType.BOOLEAN_LITERALS) {
+            consume(TokenType.BOOLEAN_LITERALS, "Expected boolean literal");
+            return new LiteralExpr(Boolean.parseBoolean(curr.getValue()));  // Convert to boolean
+        }
+
         if (curr.getType() == TokenType.LEFT_PAREN){
             return parseGrouping();
         }
@@ -374,7 +393,10 @@ class Parser{
     }
 
     public static void main(String[] args) {
-        String sourceCode = "float[] nums = {2.5, 3.6, 4.1};" + "arr[2] = 42;";
+        String sourceCode = "int[] arr = {1, 2, 3};"
+        + "float[] decimals = {1.2, 3.4, 5.6};"
+        + "boolean[] flags = {true, false, true};"
+        + "char[] letters = {'A', 'B', 'C'};";
 
         Lexer lexer = new Lexer(sourceCode);
         lexer.tokenize();
