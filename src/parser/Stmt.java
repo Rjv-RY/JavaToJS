@@ -114,6 +114,35 @@ class WhileStmt extends Stmt {
     }
 }
 
+class ArrayAssignmentStmt extends Stmt {
+    private final Token arrayName;
+    private final List<Expr> indices;
+    private final Expr value;
+
+    public ArrayAssignmentStmt(Token arrayName, List<Expr> indices, Expr value){
+        this.arrayName = arrayName;
+        this.indices = indices;
+        this.value = value;
+    }
+
+    public Token getArrayName(){
+        return arrayName;
+    }
+
+    public List<Expr> getIndices(){
+        return indices;
+    }
+
+    public Expr getValue(){
+        return value;
+    }
+
+    @Override
+    public <R> R accept(StmtVisitor<R> visitor){
+        return visitor.visitArrayAssignmentStmt(this);
+    }
+}
+
 
 
 

@@ -113,19 +113,19 @@ class GroupingExpr extends Expr{
 
 class NewArrayExpr extends Expr{
     private final Token type;
-    private final Expr size;
+    private final List<Expr> dimensions;
 
-    public NewArrayExpr(Token type, Expr size) {
+    public NewArrayExpr(Token type, List<Expr> dimensions) {
         this.type = type;
-        this.size = size;
+        this.dimensions = dimensions;
     }
 
     public Token getType() {
         return type;
     }
 
-    public Expr getSize() {
-        return size;
+    public List<Expr> getDimensions() {
+        return dimensions;
     }
 }
 
@@ -141,3 +141,9 @@ class ArrayLiteralExpr extends Expr {
     }
 }
 
+class DefaultExpr extends Expr {
+    @Override
+    public String toString() {
+        return "null"; // Or some default value like "0" for numbers, "false" for booleans
+    }
+}

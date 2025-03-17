@@ -196,22 +196,28 @@ class Parser{
 
         advance();
 
+        List<Integer> dimensions = new ArrayList<>();
         boolean isArray = false;
-        if (peek().getType() == TokenType.LEFT_BRACKET){
-            isArray = true;
+        while (peek().getType() == TokenType.LEFT_BRACKET){
             consume(TokenType.LEFT_BRACKET, "Expected '[' in array declaration");
-            consume(TokenType.RIGHT_BRACKET, "Expected ']' after '[' in array declaration");
+
+        if (peek().getType() == TokenType.NUMBER_LITERALS) { 
+            dimensions.add(Integer.parseInt(consume(TokenType.NUMBER_LITERALS, "Expected array size inside '['").getValue()));
+        } else {
+            throw new RuntimeException("Expected array size inside '['");
+        }
+
+        consume(TokenType.RIGHT_BRACKET, "Expected ']' after array size");
         }
         
-        Token name = peek();
-        consume(TokenType.IDENTIFIER, "Expected identifier after 'var'");
+        Token name = consume(TokenType.IDENTIFIER, "Expected identifier after 'var'");
         
         Expr initializer = null;
         if (peek().getType() == TokenType.ASSIGN){
             consume(TokenType.ASSIGN, "Expected '=' after variable name");
             
             if (peek().getType() == TokenType.LEFT_BRACE){
-                initializer = parseArrayLiteral();
+                initializer = parseArrayLiteral(dimensions, 0);
             } else if (peek().getType() == TokenType.NEW){
                 initializer = parseNewArray();
             } else {
@@ -224,29 +230,66 @@ class Parser{
     }
 
     //parsing arrays
-    private Expr parseArrayLiteral(){
-        List<Expr> elements = new ArrayList<>();
+    private Expr parseArrayLiteral(List<Integer> dimensions, int depth){
         consume(TokenType.LEFT_BRACE, "Expected '{' for array literal");
+        List<Expr> elements = new ArrayList<>();
+
+        int expectedSize = dimensions.get(depth);
     
-        if(peek().getType() != TokenType.RIGHT_BRACE){
-            do {
+        while (peek().getType() != TokenType.RIGHT_BRACE) {
+
+            if (elements.size() >= expectedSize){
+                throw new RuntimeException("Too many elements in array literal at depth " + depth);
+            }
+            
+            if (peek().getType() == TokenType.LEFT_BRACE) {
+                if(depth + 1 >= dimensions.size()){
+                    throw new RuntimeException("Unexpected nested array beyond declared dimensions.");
+                }
+                elements.add(parseArrayLiteral(dimensions, depth + 1));
+            } else {
+                if (depth < dimensions.size() - 1) { 
+                    // Expecting a nested array at this depth
+                    throw new RuntimeException("Expected '{}' for nested array at depth " + (depth + 1) + ", but found: " + peek().getValue());
+                }
                 elements.add(parseExpression());
-            } while (match(TokenType.COMMA));
+            }
+
+            if (peek().getType() == TokenType.COMMA) {
+                consume(TokenType.COMMA, "Expected ',' between array elements");
+            } else {
+                break;
+            }
+
+            if (elements.isEmpty() && expectedSize > 0) {
+                throw new RuntimeException("Empty array '{}' is not allowed at depth " + depth + " (expected " + expectedSize + " elements).");
+            }
+            
+            if (elements.size() < expectedSize) {
+                throw new RuntimeException("Too few elements in array literal at depth " + depth + " (expected " + expectedSize + ", got " + elements.size() + ").");
+            }
         }
         consume(TokenType.RIGHT_BRACE, "Expected '}' at the end of array literal");
+        
+        while (elements.size() < expectedSize){
+            elements.add(new DefaultExpr());
+        }
+        
         return new ArrayLiteralExpr(elements);
     }
 
     private Expr parseNewArray(){
         consume(TokenType.NEW, "Expected 'new' keyword for array allocation");
+        Token type = consume(TokenType.INT, "Expected type after new");
+
+        List<Expr> dimensions = new ArrayList<>();
+        while(peek().getType() == TokenType.LEFT_BRACKET){
+            consume(TokenType.LEFT_BRACKET, "Expected '[' after type");
+            dimensions.add(parseExpression());
+            consume(TokenType.RIGHT_BRACKET, "Expected '[' after type");
+        }
+        return new NewArrayExpr(type, dimensions);
     
-        Token type = peek();
-        consume(peek().getType(), "Expected type in 'new' array allocation");
-        consume(TokenType.LEFT_BRACKET, "Expected '[' in array allocation");
-        Expr size = parseExpression();
-        consume(TokenType.RIGHT_BRACKET, "Expected ']' after array size");
-    
-        return new NewArrayExpr(type, size);
     }
 
     public Stmt parseExpressionStatement(){
@@ -308,7 +351,6 @@ class Parser{
             Expr right = parseTerm();
             expr = new BinaryExpr(expr, operator, right);
         }
-
         return expr;
     }
 
@@ -393,10 +435,7 @@ class Parser{
     }
 
     public static void main(String[] args) {
-        String sourceCode = "int[] arr = {1, 2, 3};"
-        + "float[] decimals = {1.2, 3.4, 5.6};"
-        + "boolean[] flags = {true, false, true};"
-        + "char[] letters = {'A', 'B', 'C'};";
+        String sourceCode = "char[][] arr = {{'a', 'b'}, 'c'};";
 
         Lexer lexer = new Lexer(sourceCode);
         lexer.tokenize();
