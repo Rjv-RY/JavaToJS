@@ -14,10 +14,10 @@ class Parser{
     }
 
     public Token peek(){
-        if (current < tokens.size()){
-            return tokens.get(current);
+        if (current >= tokens.size()) {
+            return new Token(TokenType.EOF, "");
         }
-        return null;
+        return tokens.get(current);
     }
 
     private Token advance() {
@@ -42,6 +42,9 @@ class Parser{
     }
 
     public Token consume(TokenType expected, String errorMessage){
+        if (peek().getType() == TokenType.EOF) {
+            throw new RuntimeException("Unexpected end of file. " + errorMessage);
+        }
         if (expected == peek().getType()){
             Token curr = tokens.get(current);
             if (current < tokens.size()){
@@ -139,7 +142,7 @@ class Parser{
         }
 
         Stmt elseBranch = null;
-        if (peek().getType() == TokenType.ELSE){
+        if (peek() != null && peek().getType() == TokenType.ELSE){
             consume(TokenType.ELSE, "Expected 'else' keyword");
             if (peek().getType() == TokenType.LEFT_BRACE){
                 elseBranch = new BlockStmt(parseBlock());
@@ -200,30 +203,46 @@ class Parser{
         boolean isArray = false;
         while (peek().getType() == TokenType.LEFT_BRACKET){
             consume(TokenType.LEFT_BRACKET, "Expected '[' in array declaration");
+            isArray = true;
 
-        if (peek().getType() == TokenType.NUMBER_LITERALS) { 
-            dimensions.add(Integer.parseInt(consume(TokenType.NUMBER_LITERALS, "Expected array size inside '['").getValue()));
-        } else {
-            throw new RuntimeException("Expected array size inside '['");
+            if (peek().getType() == TokenType.RIGHT_BRACKET) {
+                consume(TokenType.RIGHT_BRACKET, "Expected ']' after '['");
+                dimensions.add(-1);
+            } else {
+                if (peek().getType() == TokenType.NUMBER_LITERALS) { 
+                    dimensions.add(Integer.parseInt(consume(TokenType.NUMBER_LITERALS, "Expected array size inside '['").getValue()));
+                    consume(TokenType.RIGHT_BRACKET, "Expected ']' after array size");
+                } else {
+                    throw new RuntimeException("Expected array size inside '['");
+                }
+            }
         }
-
-        consume(TokenType.RIGHT_BRACKET, "Expected ']' after array size");
-        }
-        
         Token name = consume(TokenType.IDENTIFIER, "Expected identifier after 'var'");
         
         Expr initializer = null;
         if (peek().getType() == TokenType.ASSIGN){
             consume(TokenType.ASSIGN, "Expected '=' after variable name");
             
-            if (peek().getType() == TokenType.LEFT_BRACE){
-                initializer = parseArrayLiteral(dimensions, 0);
-            } else if (peek().getType() == TokenType.NEW){
-                initializer = parseNewArray();
-            } else {
-                throw new RuntimeException("Invalid array initialization");
+            if (peek().getType() == TokenType.SEMICOLON) {
+                throw new RuntimeException("Missing value in variable assignment");
             }
-            // initializer = parseExpression();
+
+            if (type.getType() == TokenType.BOOLEAN) { 
+                initializer = parseExpression();
+
+                if (!(initializer instanceof LiteralExpr && (((LiteralExpr) initializer).getValue().equals("true") ||((LiteralExpr) initializer).getValue().equals("false")))) {
+                    throw new RuntimeException("Boolean variables can only be assigned 'true' or 'false'");
+                }
+            } else {
+                if (isArray && peek().getType() == TokenType.LEFT_BRACE){
+                    initializer = parseArrayLiteral(dimensions, 0);
+                } else if (peek().getType() == TokenType.NEW){
+                    initializer = parseNewArray();
+                } else {
+                    initializer = parseExpression();
+                }
+            }
+            
         }
         consume(TokenType.SEMICOLON, "Expected ';' after variable decleration");
         return new VarStmt(type, name, initializer, isArray);
@@ -234,46 +253,55 @@ class Parser{
         consume(TokenType.LEFT_BRACE, "Expected '{' for array literal");
         List<Expr> elements = new ArrayList<>();
 
-        int expectedSize = dimensions.get(depth);
-    
-        while (peek().getType() != TokenType.RIGHT_BRACE) {
+        int expectedSize = dimensions.size() > depth ? dimensions.get(depth) : -1;
+        boolean dynamicSize = (expectedSize == -1);
 
-            if (elements.size() >= expectedSize){
-                throw new RuntimeException("Too many elements in array literal at depth " + depth);
+        if (peek().getType() == TokenType.RIGHT_BRACE) {
+            consume(TokenType.RIGHT_BRACE, "Expected '}' at the end of array literal");
+            return new ArrayLiteralExpr(elements);
+        }
+    
+        while (true) {
+            //handle eof
+            if (peek().getType() == TokenType.EOF || peek().getType() == TokenType.SEMICOLON) {
+                throw new RuntimeException("Missing closing '}' in array literal");
             }
-            
+
+            //handle left brace
             if (peek().getType() == TokenType.LEFT_BRACE) {
-                if(depth + 1 >= dimensions.size()){
+                if (depth + 1 >= dimensions.size()  && !dynamicSize) {
                     throw new RuntimeException("Unexpected nested array beyond declared dimensions.");
                 }
                 elements.add(parseArrayLiteral(dimensions, depth + 1));
             } else {
-                if (depth < dimensions.size() - 1) { 
-                    // Expecting a nested array at this depth
-                    throw new RuntimeException("Expected '{}' for nested array at depth " + (depth + 1) + ", but found: " + peek().getValue());
-                }
                 elements.add(parseExpression());
             }
 
+            //for commas
             if (peek().getType() == TokenType.COMMA) {
                 consume(TokenType.COMMA, "Expected ',' between array elements");
-            } else {
+                // chek trail comma
+                if (peek().getType() == TokenType.RIGHT_BRACE) {
+                    break;
+                }
+            } else if (peek().getType() == TokenType.RIGHT_BRACE) {
                 break;
-            }
-
-            if (elements.isEmpty() && expectedSize > 0) {
-                throw new RuntimeException("Empty array '{}' is not allowed at depth " + depth + " (expected " + expectedSize + " elements).");
-            }
-            
-            if (elements.size() < expectedSize) {
-                throw new RuntimeException("Too few elements in array literal at depth " + depth + " (expected " + expectedSize + ", got " + elements.size() + ").");
+            } else {
+                throw new RuntimeException("Expected ',' or '}' after array element, found: " + peek().getType());
             }
         }
+
         consume(TokenType.RIGHT_BRACE, "Expected '}' at the end of array literal");
         
-        while (elements.size() < expectedSize){
-            elements.add(new DefaultExpr());
+        if (!dynamicSize){
+
+            if (elements.size() > expectedSize) {
+                throw new RuntimeException("Too many elements in array literal at depth " + depth + " (expected " + expectedSize + ", got " + elements.size() + ")");
+            } else if (elements.size() < expectedSize) {
+                throw new RuntimeException("Too few elements in array literal at depth " + depth + " (expected " + expectedSize + ", got " + elements.size() + ")");
+            }
         }
+        
         
         return new ArrayLiteralExpr(elements);
     }
@@ -307,9 +335,6 @@ class Parser{
                 Token assign = consume(TokenType.ASSIGN, "Expected '+' after variable name");
                 Expr right = parseExpression();
                 return new AssignmentExpr(name, assign, right);   
-            } else {
-                consume(TokenType.IDENTIFIER, "Expected variable/identifier");
-                return new VariableExpr(curr.getValue());
             }
         }
         return parseLogical();
@@ -435,12 +460,13 @@ class Parser{
     }
 
     public static void main(String[] args) {
-        String sourceCode = "char[][] arr = {{'a', 'b'}, 'c'};";
+        String sourceCode = "boolean flag = 1;";
 
         Lexer lexer = new Lexer(sourceCode);
         lexer.tokenize();
             
-        List<Token> tokens = lexer.getTokens(); // Get the token list
+        List<Token> tokens = lexer.getTokens();// Get the token list
+        System.out.println(tokens);
         Parser parser = new Parser(tokens);     // Pass to parser
         parser.parseStatement();   
     }

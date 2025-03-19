@@ -136,11 +136,6 @@ class ArrayAssignmentStmt extends Stmt {
     public Expr getValue(){
         return value;
     }
-
-    @Override
-    public <R> R accept(StmtVisitor<R> visitor){
-        return visitor.visitArrayAssignmentStmt(this);
-    }
 }
 
 
