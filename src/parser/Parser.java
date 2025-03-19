@@ -1,5 +1,7 @@
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import lexer.Lexer;
 import lexer.Token;
@@ -39,6 +41,10 @@ class Parser{
             return true;
         }
         return false;
+    }
+
+    public Token consume(TokenType expected) {
+        return consume(expected, "Expected " + expected + " but found " + peek().getType());
     }
 
     public Token consume(TokenType expected, String errorMessage){
@@ -86,11 +92,12 @@ class Parser{
         return parseAssignment();
     }
 
+    private static final Set<TokenType> TYPE_TOKENS = EnumSet.of(
+    TokenType.INT, TokenType.FLOAT, TokenType.BOOLEAN, TokenType.CHAR
+    );
+
     private boolean isType(Token token) {
-        return token.getType() == TokenType.INT ||
-               token.getType() == TokenType.FLOAT ||
-               token.getType() == TokenType.BOOLEAN ||
-               token.getType() == TokenType.CHAR;
+        return TYPE_TOKENS.contains(token.getType());
     }
 
     public Stmt parseStatement(){
@@ -113,16 +120,23 @@ class Parser{
 
     //parsing block statements
     public List<Stmt> parseBlock() {
-    List<Stmt> statements = new ArrayList<>();
-    
-    consume(TokenType.LEFT_BRACE, "Expected '{' to begin block");
+        List<Stmt> statements = new ArrayList<>();
 
-    while (peek() != null && peek().getType() != TokenType.RIGHT_BRACE) {
-        statements.add(parseStatement());
-    }
+        if (peek().getType() == TokenType.EOF) {
+            throw new RuntimeException("Unclosed block: Expected '}' but reached end of file");
+        }
+        
+        consume(TokenType.LEFT_BRACE, "Expected '{' to begin block");
 
-    consume(TokenType.RIGHT_BRACE, "Expected '}' to close block");
-    return statements;
+        while (peek() != null && peek().getType() != TokenType.RIGHT_BRACE) {
+            if (peek().getType() == TokenType.EOF) {
+                throw new RuntimeException("Unclosed block: Expected '{' but reached end of file");
+            }
+            statements.add(parseStatement());
+        }
+
+        consume(TokenType.RIGHT_BRACE, "Expected '}' to close block");
+        return statements;
     }
 
     //parsing If
@@ -189,11 +203,7 @@ class Parser{
         Token type = peek();
     
         // Check if it's a valid type keyword or 'var'
-        if (!(type.getType() == TokenType.VAR ||
-              type.getType() == TokenType.INT ||
-              type.getType() == TokenType.FLOAT ||
-              type.getType() == TokenType.BOOLEAN ||
-              type.getType() == TokenType.CHAR)) {
+        if (!(isType(type) || type.getType() == TokenType.VAR)) {
             throw new RuntimeException("Expected type keyword (int, float, boolean, char, var) in variable declaration.");
         }
 
@@ -311,11 +321,27 @@ class Parser{
         Token type = consume(TokenType.INT, "Expected type after new");
 
         List<Expr> dimensions = new ArrayList<>();
+        boolean foundDimension = false;
+
         while(peek().getType() == TokenType.LEFT_BRACKET){
+            foundDimension = true;
             consume(TokenType.LEFT_BRACKET, "Expected '[' after type");
-            dimensions.add(parseExpression());
-            consume(TokenType.RIGHT_BRACKET, "Expected '[' after type");
+            if (peek().getType() == TokenType.RIGHT_BRACKET) {
+                consume(TokenType.RIGHT_BRACKET, "Expected ']' after '['");
+                if (dimensions.isEmpty()) {
+                    throw new RuntimeException("First dimension size must be specified in array creation");
+                }
+                dimensions.add(null);
+            } else {
+                dimensions.add(parseExpression());
+                consume(TokenType.RIGHT_BRACKET, "Expected ']' after expression");
+            }
         }
+
+        if (!foundDimension) {
+            throw new RuntimeException("Array creation requires at least one dimension");
+        }
+
         return new NewArrayExpr(type, dimensions);
     
     }
@@ -411,45 +437,41 @@ class Parser{
     private Expr parsePrimary(){
         Token curr = peek();
 
-        if(curr.getType() == TokenType.IDENTIFIER){
-            consume(TokenType.IDENTIFIER, "Expected Identifier/Variable");
-            return new VariableExpr(curr.getValue());
-        }
+        switch(curr.getType()){
+            case IDENTIFIER:
+                consume(TokenType.IDENTIFIER, "Expected Identifier/Variable");
+                return new VariableExpr(curr.getValue());
+            
+            case NUMBER_LITERALS:
+                consume(TokenType.NUMBER_LITERALS, "Expected number");
+                return new LiteralExpr(Double.parseDouble(curr.getValue()));
 
-        if (curr.getType() == TokenType.NUMBER_LITERALS){
-            consume(TokenType.NUMBER_LITERALS, "Expected number");
-            return new LiteralExpr(Double.parseDouble(curr.getValue()));
-        }
-        
-        if (curr.getType() == TokenType.FLOAT_LITERALS) {
-            consume(TokenType.FLOAT_LITERALS, "Expected float");
-            return new LiteralExpr(Double.parseDouble(curr.getValue()));
-        }
+            case FLOAT_LITERALS:
+                consume(TokenType.FLOAT_LITERALS, "Expected float");
+                return new LiteralExpr(Double.parseDouble(curr.getValue())); 
 
-        if (curr.getType() == TokenType.CHAR_LITERALS) {
-            consume(TokenType.CHAR_LITERALS, "Expected character literal");
-            String value = curr.getValue();
-            if (value.length() != 1) {
-                throw new RuntimeException("Invalid character literal: " + value);
-            }
-            return new LiteralExpr(value.charAt(0));  // Convert to char
-        }
+            case CHAR_LITERALS:
+                consume(TokenType.CHAR_LITERALS, "Expected character literal");
+                String value = curr.getValue();
+                if (value.length() != 1) {
+                    throw new RuntimeException("Invalid character literal: " + value);
+                }
+                return new LiteralExpr(value.charAt(0));
 
-        if (curr.getType() == TokenType.STRING_LITERALS) {
-            consume(TokenType.STRING_LITERALS, "Expected string literal");
-            return new LiteralExpr(curr.getValue());  // Store as a String
-        }
+            case STRING_LITERALS:
+                consume(TokenType.STRING_LITERALS, "Expected string literal");
+                return new LiteralExpr(curr.getValue());
 
-        if (curr.getType() == TokenType.BOOLEAN_LITERALS) {
-            consume(TokenType.BOOLEAN_LITERALS, "Expected boolean literal");
-            return new LiteralExpr(Boolean.parseBoolean(curr.getValue()));  // Convert to boolean
-        }
+            case BOOLEAN_LITERALS:
+                consume(TokenType.BOOLEAN_LITERALS, "Expected boolean literal");
+                return new LiteralExpr(Boolean.parseBoolean(curr.getValue()));
+            
+            case LEFT_PAREN:
+                return parseGrouping();
 
-        if (curr.getType() == TokenType.LEFT_PAREN){
-            return parseGrouping();
+            default:
+                throw new RuntimeException("Unexpected token: '" + curr.getValue() + "' of type " + curr.getType() + ". Expected a variable, literal, or expression.");
         }
-
-        throw new RuntimeException("Unexpected token: " + curr.getValue() + ", " + curr.getType());
     }
 
     public Expr parseGrouping(){
@@ -460,7 +482,7 @@ class Parser{
     }
 
     public static void main(String[] args) {
-        String sourceCode = "boolean flag = 1;";
+        String sourceCode = "int[] arr = new int[];";
 
         Lexer lexer = new Lexer(sourceCode);
         lexer.tokenize();
@@ -470,9 +492,4 @@ class Parser{
         Parser parser = new Parser(tokens);     // Pass to parser
         parser.parseStatement();   
     }
-
-    //this is something of a nightmare as of yet. 
-    //parseExpression calls parseLogical calls parseLogicalAnd 
-    //calls parseComparison calls parseTerm calls parseFactor 
-    //calls parsePrimary calls parseGrouping and also parseLiteral
 }
