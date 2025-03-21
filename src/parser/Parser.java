@@ -201,30 +201,28 @@ class Parser{
 
     public Stmt parseVarDecleration(){
         Token type = peek();
-    
+        
         // Check if it's a valid type keyword or 'var'
         if (!(isType(type) || type.getType() == TokenType.VAR)) {
             throw new RuntimeException("Expected type keyword (int, float, boolean, char, var) in variable declaration.");
         }
-
+    
         advance();
-
+    
         List<Integer> dimensions = new ArrayList<>();
         boolean isArray = false;
+    
         while (peek().getType() == TokenType.LEFT_BRACKET){
             consume(TokenType.LEFT_BRACKET, "Expected '[' in array declaration");
             isArray = true;
-
+    
+            // Only allow empty brackets in type declaration (int[] x, not int[3] x)
             if (peek().getType() == TokenType.RIGHT_BRACKET) {
                 consume(TokenType.RIGHT_BRACKET, "Expected ']' after '['");
                 dimensions.add(-1);
             } else {
-                if (peek().getType() == TokenType.NUMBER_LITERALS) { 
-                    dimensions.add(Integer.parseInt(consume(TokenType.NUMBER_LITERALS, "Expected array size inside '['").getValue()));
-                    consume(TokenType.RIGHT_BRACKET, "Expected ']' after array size");
-                } else {
-                    throw new RuntimeException("Expected array size inside '['");
-                }
+                // Reject array size in type declaration
+                throw new RuntimeException("Invalid syntax: Array dimensions cannot be specified in variable declaration, only during initialization");
             }
         }
         Token name = consume(TokenType.IDENTIFIER, "Expected identifier after 'var'");
@@ -236,23 +234,26 @@ class Parser{
             if (peek().getType() == TokenType.SEMICOLON) {
                 throw new RuntimeException("Missing value in variable assignment");
             }
-
+    
             if (type.getType() == TokenType.BOOLEAN) { 
                 initializer = parseExpression();
-
+    
                 if (!(initializer instanceof LiteralExpr && (((LiteralExpr) initializer).getValue().equals("true") ||((LiteralExpr) initializer).getValue().equals("false")))) {
                     throw new RuntimeException("Boolean variables can only be assigned 'true' or 'false'");
                 }
             } else {
-                if (isArray && peek().getType() == TokenType.LEFT_BRACE){
-                    initializer = parseArrayLiteral(dimensions, 0);
-                } else if (peek().getType() == TokenType.NEW){
-                    initializer = parseNewArray();
+                if (isArray){
+                    if (peek().getType() == TokenType.NEW){
+                        initializer = parseNewArray();
+                    } else if (peek().getType() == TokenType.LEFT_BRACE){
+                        initializer = parseArrayLiteral(dimensions, 0);
+                    } else {
+                        throw new RuntimeException("Array initialization must use 'new' keyword or array literal");
+                    }
                 } else {
                     initializer = parseExpression();
                 }
             }
-            
         }
         consume(TokenType.SEMICOLON, "Expected ';' after variable decleration");
         return new VarStmt(type, name, initializer, isArray);
@@ -482,14 +483,13 @@ class Parser{
     }
 
     public static void main(String[] args) {
-        String sourceCode = "int[] arr = new int[];";
-
+        String sourceCode = "int[] arr = new int[3];";
         Lexer lexer = new Lexer(sourceCode);
         lexer.tokenize();
             
-        List<Token> tokens = lexer.getTokens();// Get the token list
+        List<Token> tokens = lexer.getTokens();
         System.out.println(tokens);
-        Parser parser = new Parser(tokens);     // Pass to parser
+        Parser parser = new Parser(tokens);   
         parser.parseStatement();   
     }
 }
