@@ -1,3 +1,5 @@
+package parser;
+
 //Abstract Syntax Tree
 
 abstract class ASTNode{}
