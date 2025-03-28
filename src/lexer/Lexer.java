@@ -83,21 +83,21 @@ public class Lexer {
         } else if (current == '\'') {
             scanCharLiteral();
         } else if (current == '/') {
-            // Special handling for comments
+            // special handling for comments
             if (position + 1 < sourceCode.length()) {
                 char next = sourceCode.charAt(position + 1);
                 
                 if (next == '/') {
-                    // Single line comment
-                    advance(); // Skip /
-                    advance(); // Skip /
+                    // single line comment
+                    advance(); // Skipping
+                    advance(); 
                     while (position < sourceCode.length() && sourceCode.charAt(position) != '\n') {
                         advance();
                     }
-                    // No need to consume the newline - it will be handled as whitespace in the next iteration
+                    //newline taken as whitespace, ignored
                 } else if (next == '*') {
-                    // Multiline comment
-                    advance(); // Skip /
+                    // multi-line comment
+                    advance(); // Skip 
                     advance(); // Skip *
                     
                     boolean closed = false;
@@ -106,7 +106,7 @@ public class Lexer {
                             position + 1 < sourceCode.length() && 
                             sourceCode.charAt(position + 1) == '/') {
                             advance(); // Skip *
-                            advance(); // Skip /
+                            advance();
                             closed = true;
                             break;
                         }
@@ -117,11 +117,11 @@ public class Lexer {
                         System.err.println("ERROR: Unclosed multi-line comment at line " + lineNumber);
                     }
                 } else {
-                    // Not a comment, treat as a normal symbol
+                    // not comment, treat as a normal symbol
                     scanSymbol();
                 }
             } else {
-                // Just a single / at the end of file
+                // just a single / at the eof
                 scanSymbol();
             }
         } else {
@@ -198,7 +198,7 @@ public class Lexer {
         if (position >= sourceCode.length()) {
             System.err.println("ERROR: Unclosed string literal");
         } else {
-            advance(); // Consume closing "
+            advance(); // consume closing "
         }
         tokens.add(new Token(TokenType.STRING_LITERALS, str.toString()));
     }

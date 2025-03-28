@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
-
 import lexer.Lexer;
 import lexer.Token;
 import lexer.TokenType;
+import parser.stmts.*;
 
 class Parser{
     private List<Token> tokens;
@@ -247,7 +247,7 @@ class Parser{
             }
         }
         
-        // Ensure semicolon is consumed for all variable declarations
+        // ensure semicolon is consumed for all variable declarations
         consume(TokenType.SEMICOLON, "Expected ';' after variable declaration");
         return new VarStmt(type, name, initializer, isArray);
     }

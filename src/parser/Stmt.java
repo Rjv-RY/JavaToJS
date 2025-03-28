@@ -1,144 +1,141 @@
 package parser;
 
-import lexer.Token;
-import java.util.List;
-
 //for statements
 
 public abstract class Stmt {
-    }
-
-class ExprStmt extends Stmt{
-    private final Expr expr;
-
-    public ExprStmt(Expr expr){
-        this.expr = expr;
-    }
-
-    public Expr getExpr(){
-        return expr;
-    }
 }
 
-class PrintStmt extends Stmt{
-    private final Expr expr;
+// class ExprStmt extends Stmt{
+//     private final Expr expr;
 
-    public PrintStmt(Expr expr){
-        this.expr = expr;
-    }
+//     public ExprStmt(Expr expr){
+//         this.expr = expr;
+//     }
 
-    public Expr getExpr(){
-        return expr;
-    }
-}
+//     public Expr getExpr(){
+//         return expr;
+//     }
+// }
 
-class VarStmt extends Stmt{
-    private final Token type;
-    private final Token name;
-    private final Expr initializer;
-    private final boolean isArray;
+// class PrintStmt extends Stmt{
+//     private final Expr expr;
 
-    public VarStmt(Token type, Token name, Expr initializer, boolean isArray){
-        this.type = type;
-        this.name = name;
-        this.initializer = initializer;
-        this.isArray = isArray;
-    }
+//     public PrintStmt(Expr expr){
+//         this.expr = expr;
+//     }
 
-    public Token getType(){
-        return type;
-    }
+//     public Expr getExpr(){
+//         return expr;
+//     }
+// }
 
-    public Token getName(){
-        return name;
-    }
+// class VarStmt extends Stmt{
+//     private final Token type;
+//     private final Token name;
+//     private final Expr initializer;
+//     private final boolean isArray;
 
-    public Expr getInitialzer(){
-        return initializer;
-    }
+//     public VarStmt(Token type, Token name, Expr initializer, boolean isArray){
+//         this.type = type;
+//         this.name = name;
+//         this.initializer = initializer;
+//         this.isArray = isArray;
+//     }
 
-    public boolean isArray(){
-        return isArray;
-    }
-}
+//     public Token getType(){
+//         return type;
+//     }
 
-class BlockStmt extends Stmt{
-    private final List<Stmt> statements;
+//     public Token getName(){
+//         return name;
+//     }
 
-    public BlockStmt(List<Stmt> statements){
-        this.statements = statements;
-    }
+//     public Expr getInitialzer(){
+//         return initializer;
+//     }
 
-    public List<Stmt> getStatements(){
-        return statements;
-    }
-}
+//     public boolean isArray(){
+//         return isArray;
+//     }
+// }
 
-class IfStmt extends Stmt {
-    private final Expr condition;
-    private final Stmt thenBranch;
-    private final Stmt elseBranch;
+// class BlockStmt extends Stmt{
+//     private final List<Stmt> statements;
 
-    public IfStmt(Expr condition, Stmt thenBranch, Stmt elseBranch) {
-        this.condition = condition;
-        this.thenBranch = thenBranch;
-        this.elseBranch = elseBranch;
-    }
+//     public BlockStmt(List<Stmt> statements){
+//         this.statements = statements;
+//     }
 
-    public Expr getCondition() {
-        return condition;
-    }
+//     public List<Stmt> getStatements(){
+//         return statements;
+//     }
+// }
 
-    public Stmt getThenBranch() {
-        return thenBranch;
-    }
+// class IfStmt extends Stmt {
+//     private final Expr condition;
+//     private final Stmt thenBranch;
+//     private final Stmt elseBranch;
 
-    public Stmt getElseBranch() {
-        return elseBranch;
-    }
-}
+//     public IfStmt(Expr condition, Stmt thenBranch, Stmt elseBranch) {
+//         this.condition = condition;
+//         this.thenBranch = thenBranch;
+//         this.elseBranch = elseBranch;
+//     }
 
-class WhileStmt extends Stmt {
-    private final Expr condition;
-    private final Stmt body;
+//     public Expr getCondition() {
+//         return condition;
+//     }
 
-    public WhileStmt(Expr condition, Stmt body) {
-        this.condition = condition;
-        this.body = body;
-    }
+//     public Stmt getThenBranch() {
+//         return thenBranch;
+//     }
 
-    public Expr getCondition() {
-        return condition;
-    }
+//     public Stmt getElseBranch() {
+//         return elseBranch;
+//     }
+// }
 
-    public Stmt getBody() {
-        return body;
-    }
-}
+// class WhileStmt extends Stmt {
+//     private final Expr condition;
+//     private final Stmt body;
 
-class ArrayAssignmentStmt extends Stmt {
-    private final Token arrayName;
-    private final List<Expr> indices;
-    private final Expr value;
+//     public WhileStmt(Expr condition, Stmt body) {
+//         this.condition = condition;
+//         this.body = body;
+//     }
 
-    public ArrayAssignmentStmt(Token arrayName, List<Expr> indices, Expr value){
-        this.arrayName = arrayName;
-        this.indices = indices;
-        this.value = value;
-    }
+//     public Expr getCondition() {
+//         return condition;
+//     }
 
-    public Token getArrayName(){
-        return arrayName;
-    }
+//     public Stmt getBody() {
+//         return body;
+//     }
+// }
 
-    public List<Expr> getIndices(){
-        return indices;
-    }
+// class ArrayAssignmentStmt extends Stmt {
+//     private final Token arrayName;
+//     private final List<Expr> indices;
+//     private final Expr value;
 
-    public Expr getValue(){
-        return value;
-    }
-}
+//     public ArrayAssignmentStmt(Token arrayName, List<Expr> indices, Expr value){
+//         this.arrayName = arrayName;
+//         this.indices = indices;
+//         this.value = value;
+//     }
+
+//     public Token getArrayName(){
+//         return arrayName;
+//     }
+
+//     public List<Expr> getIndices(){
+//         return indices;
+//     }
+
+//     public Expr getValue(){
+//         return value;
+//     }
+// }
 
 
 
