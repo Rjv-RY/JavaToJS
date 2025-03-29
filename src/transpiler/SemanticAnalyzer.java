@@ -12,9 +12,20 @@ public class SemanticAnalyzer{
     }
 
     public void analyze(Stmt stmt) {
-        if (stmt instanceof VarStmt){
-            analyzeVarStmt((VarStmt) stmt);
+        if (stmt instanceof VarStmt varStmt){
+            analyzeVarStmt(varStmt);
         }
+    }
+
+    private void analyzeAssignmentExpr(AssignmentExpr expr){
+        String varName = expr.getName().getValue();
+
+        if(!symbolTable.isDeclared(varName)){
+            throw new RuntimeException("Undeclared variable: " + varName);
+        }
+
+        String expectedType = symbolTable.getVariableType(varName);
+        analyzeExpression(expr.getRight(), expectedType);
     }
 
     private void analyzeVarStmt(VarStmt stmt){
@@ -29,11 +40,18 @@ public class SemanticAnalyzer{
     }
 
     private void analyzeExpression(Expr expr, String expectedType) {
-        if (expr instanceof LiteralExpr) {
-            String actualType = inferLiteralType((LiteralExpr) expr);
+        if (expr instanceof VariableExpr variableExpr) {
+            String varName = variableExpr.getVar();
+            if (!symbolTable.isDeclared(varName)) {
+                throw new RuntimeException("Undeclared variable: " + varName);
+            }
+        }else if (expr instanceof LiteralExpr literalExpr) {
+            String actualType = inferLiteralType(literalExpr);
             if (!actualType.equals(expectedType)) {
                 throw new RuntimeException("Type mismatch: expected " + expectedType + " but got " + actualType);
             }
+        } else if (expr instanceof AssignmentExpr assignmentExpr) {
+            analyzeAssignmentExpr(assignmentExpr);
         }
     }
 
@@ -42,6 +60,6 @@ public class SemanticAnalyzer{
         if (value.matches("\\d+")) return "int";
         if (value.matches("\\d+\\.\\d+")) return "float";
         if (value.equals("true") || value.equals("false")) return "boolean";
-        return "string"; // Default case
+        return "string";
     }
 }
