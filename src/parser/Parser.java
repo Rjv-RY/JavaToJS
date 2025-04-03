@@ -304,15 +304,12 @@ class Parser{
         consume(TokenType.RIGHT_BRACE, "Expected '}' at the end of array literal");
         
         if (!dynamicSize){
-
             if (elements.size() > expectedSize) {
                 throw new RuntimeException("Too many elements in array literal at depth " + depth + " (expected " + expectedSize + ", got " + elements.size() + ")");
             } else if (elements.size() < expectedSize) {
                 throw new RuntimeException("Too few elements in array literal at depth " + depth + " (expected " + expectedSize + ", got " + elements.size() + ")");
             }
         }
-        
-        
         return new ArrayLiteralExpr(elements);
     }
 
@@ -337,13 +334,10 @@ class Parser{
                 consume(TokenType.RIGHT_BRACKET, "Expected ']' after expression");
             }
         }
-
         if (!foundDimension) {
             throw new RuntimeException("Array creation requires at least one dimension");
         }
-
         return new NewArrayExpr(type, dimensions);
-    
     }
 
     public Stmt parseExpressionStatement(){

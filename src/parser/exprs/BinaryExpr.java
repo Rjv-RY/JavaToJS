@@ -1,7 +1,7 @@
 package parser.exprs;
 
-import parser.Expr;
 import lexer.Token;
+import parser.Expr;
 
 public class BinaryExpr extends Expr{
     private final Expr left;
