@@ -18,12 +18,36 @@ public class SemanticAnalyzer{
             analyzeIfStmt(ifStmt);
         } else if (stmt instanceof WhileStmt whileStmt){
             analyzeWhileStmt(whileStmt);
+        } else if (stmt instanceof  BlockStmt blockStmt){
+            analyzeBlockStmt(blockStmt);
+        }
+    }
+
+    public void analyzeBlockStmt(BlockStmt blockStmt){
+        symbolTable.enterScope();
+
+        for (Stmt stmt : blockStmt.getStatements()){
+            analyze(stmt);
+        }
+    }
+
+    private boolean isValidConditionType(String type) {
+        // Define which types can be implicitly converted to boolean
+        switch (type) {
+            case "boolean":
+                return true; // Already a boolean, no conversion needed
+            case "int":
+            case "float":
+                return true; // Numeric types (0 = false, anything else = true)
+            case "string":
+                return true; // String types (empty = false, non-empty = true)
+            default:
+                return false; // Other types can't be converted
         }
     }
 
     private String analyzeAssignmentExpr(AssignmentExpr expr){
         String varName = expr.getName().getValue();
-    
         if (!symbolTable.isDeclared(varName)){
             throw new RuntimeException("Undeclared variable: " + varName);
         }
@@ -58,7 +82,6 @@ public class SemanticAnalyzer{
             }
             return (leftType.equals("float") || rightType.equals("float")) ? "float" : "int"; // Preserve type promotion
         }
-    
         throw new RuntimeException("Unsupported binary operator: " + operator);
     }
 
@@ -103,22 +126,28 @@ public class SemanticAnalyzer{
 
     private void analyzeIfStmt(IfStmt stmt){
         String conditionType = analyzeExpression(stmt.getCondition());
-        if (!conditionType.equals("boolean")) {
-            throw new RuntimeException("If statement condition must be a boolean, got: " + conditionType);
+        if (!isValidConditionType(conditionType)) {
+            throw new RuntimeException("If statement condition must be coercible to boolean, got: " + conditionType);
         }
+        symbolTable.enterScope(); 
         analyze(stmt.getThenBranch());
 
-        if(stmt.getElseBranch() != null){
-            analyze((stmt.getElseBranch()));
+        symbolTable.exitScope();
+
+        if (stmt.getElseBranch() != null) {
+            symbolTable.enterScope();
+            analyze(stmt.getElseBranch());
+            symbolTable.exitScope();
         }
     }
 
     private void analyzeWhileStmt(WhileStmt stmt){
         String conditionType = analyzeExpression(stmt.getCondition());
-        if (!conditionType.equals("boolean")) {
-            throw new RuntimeException("While loop condition must be a boolean, got: " + conditionType);
+        if (!isValidConditionType(conditionType)) {
+            throw new RuntimeException("While statement condition must be coercible to boolean, got: " + conditionType);
         }
-
+        symbolTable.enterScope();
         analyze(stmt.getBody());
+        symbolTable.exitScope();
     }
 }
