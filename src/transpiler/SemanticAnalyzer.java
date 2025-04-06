@@ -126,8 +126,10 @@ public class SemanticAnalyzer{
 
     private void analyzeIfStmt(IfStmt stmt){
         String conditionType = analyzeExpression(stmt.getCondition());
-        if (!isValidConditionType(conditionType)) {
-            throw new RuntimeException("If statement condition must be coercible to boolean, got: " + conditionType);
+        try {
+            coerceExpressionToBoolean(stmt.getCondition(), conditionType);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("If statement condition error: " + e.getMessage());
         }
         symbolTable.enterScope(); 
         analyze(stmt.getThenBranch());
@@ -146,8 +148,31 @@ public class SemanticAnalyzer{
         if (!isValidConditionType(conditionType)) {
             throw new RuntimeException("While statement condition must be coercible to boolean, got: " + conditionType);
         }
+
+        try {
+            coerceExpressionToBoolean(stmt.getCondition(), conditionType);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("While statement condition error: " + e.getMessage());
+        }
+
         symbolTable.enterScope();
         analyze(stmt.getBody());
         symbolTable.exitScope();
+    }
+
+    private String coerceExpressionToBoolean(Expr expr, String exprType){
+        if (exprType.equals("boolean")){
+            return exprType;
+        }
+
+        if(exprType.equals("int") || exprType.equals("float")){
+            return "boolean";
+        }
+
+        if(exprType.equals("string")){
+            return "boolean";
+        }
+
+        throw new RuntimeException("Cannot coerce type " + exprType + " to boolean");
     }
 }
