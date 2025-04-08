@@ -252,14 +252,11 @@ public class Lexer {
                 if (peek() == '='){
                     tokens.add(new Token(TokenType.PLUS_EQUALS, "+="));
                     advance();
-                    advance();
                 } else if (peek() == '+'){
                     tokens.add(new Token(TokenType.INCREMENT, "++"));
                     advance();
-                    advance();
                 } else {
                     tokens.add(new Token(TokenType.PLUS, "+"));
-                    advance();
                 }
                 break;
 
@@ -267,14 +264,11 @@ public class Lexer {
                 if (peek() == '='){
                     tokens.add(new Token(TokenType.MINUS_EQUALS, "-="));
                     advance();
-                    advance();
                 } else if (peek() == '-'){
                     tokens.add(new Token(TokenType.DECREMENT, "--"));
                     advance();
-                    advance();
                 } else {
                     tokens.add(new Token(TokenType.MINUS, "-"));
-                    advance();
                 }
                 break;
 
@@ -282,10 +276,8 @@ public class Lexer {
                 if (peek() == '='){
                     tokens.add(new Token(TokenType.EQUALS, "=="));
                     advance();
-                    advance();
                 } else {
                     tokens.add(new Token(TokenType.ASSIGN, "="));
-                    advance();
                 }
                 break;
 
@@ -293,10 +285,8 @@ public class Lexer {
                 if (peek() == '='){
                     tokens.add(new Token(TokenType.NOT_EQUALS, "!="));
                     advance();
-                    advance();
                 } else {
                     tokens.add(new Token(TokenType.NOT, "!"));
-                    advance();
                 }
                 break;
 
@@ -304,10 +294,8 @@ public class Lexer {
                 if (peek() == '&'){
                     tokens.add(new Token(TokenType.AND, "&&"));
                     advance();
-                    advance();
                 } else {
                     tokens.add(new Token(TokenType.BITWISE_AND, "&"));
-                    advance();
                 }
                 break;
 
@@ -315,10 +303,8 @@ public class Lexer {
                 if (peek() == '|'){
                     tokens.add(new Token(TokenType.OR, "||"));
                     advance();
-                    advance();
                 } else {
                     tokens.add(new Token(TokenType.BITWISE_OR, "|"));
-                    advance();
                 }
                 break;
 
@@ -326,10 +312,8 @@ public class Lexer {
                 if (peek() == '='){
                     tokens.add(new Token(TokenType.MULT_EQUALS, "*="));
                     advance();
-                    advance();
                 } else {
                     tokens.add(new Token(TokenType.MULTIPLY, "*"));
-                    advance();
                 }
                 break;
 
@@ -337,10 +321,8 @@ public class Lexer {
                 if (peek() == '=') {
                     tokens.add(new Token(TokenType.DIV_EQUALS, "/="));
                     advance();
-                    advance();
                 } else {
                     tokens.add(new Token(TokenType.DIVIDE, "/"));
-                    advance();
                 }
                 break;
 
@@ -349,10 +331,8 @@ public class Lexer {
                 if (peek() == '='){
                     tokens.add(new Token(TokenType.LESS_THAN_EQUALS, "<="));
                     advance();
-                    advance();
                 } else {
                     tokens.add(new Token(TokenType.LESS_THAN, "<"));
-                    advance();
                 }
                 break;
             //greater than
@@ -360,21 +340,17 @@ public class Lexer {
                 if (peek() == '=') {
                     tokens.add(new Token(TokenType.GREATER_THAN_EQUALS, ">="));
                     advance();
-                    advance();
                 } else {
                     tokens.add(new Token(TokenType.GREATER_THAN, ">"));
-                    advance();
                 }
                 break;
 
             case ',':
                 tokens.add(new Token(TokenType.COMMA, ","));
-                advance();
                 break;
 
             case '%':
                 tokens.add(new Token(TokenType.MOD, "%"));
-                advance();
                 break;
 
             //parenthesis & brackets

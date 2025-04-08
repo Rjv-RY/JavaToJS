@@ -413,12 +413,26 @@ class Parser{
     private Expr parseFactor(){
         Token curr = peek();
         if (curr.getType() == TokenType.MINUS || curr.getType() == TokenType.PLUS || curr.getType() == TokenType.NOT){
-            Token operator = consume(curr.getType(), "Expected unary operator '-' or '+' or logical '!'");
+            Token operator = consume(curr.getType(), "Expected unary operator");
             Expr right = parseFactor();
             return new UnaryExpr(operator, right);
         }
 
+        else if (curr.getType() == TokenType.INCREMENT || curr.getType() == TokenType.DECREMENT){
+            Token operator = consume(curr.getType(), "Expected increment/decrement");
+            if (peek().getType() != TokenType.IDENTIFIER) {
+                throw new RuntimeException("Increment/decrement can only be applied to variables");
+            }
+            Token variable = consume(TokenType.IDENTIFIER, "Expected variable name");
+            return new UnaryExpr(operator, new VariableExpr(variable.getValue()));
+        }
+
         Expr expr = parsePrimary();
+
+        if (peek() != null && (peek().getType() == TokenType.INCREMENT || peek().getType() == TokenType.DECREMENT)){
+            Token operator = consume(peek().getType(), "Expected postfix operator");
+            return new PostfixExpr(expr, operator); 
+        }
 
         while(peek() != null && (peek().getType() == TokenType.MULTIPLY|| peek().getType() == TokenType.DIVIDE)){
             Token operator = consume(peek().getType(), "Expected '*' or '/'");
@@ -476,7 +490,7 @@ class Parser{
     }
 
     public static void main(String[] args) {
-        String sourceCode = "boolean b = (x > y) && (y < z);";
+        String sourceCode = "int result = -x + ++y * (z--); ";
         Lexer lexer = new Lexer(sourceCode);
         lexer.tokenize();
 
