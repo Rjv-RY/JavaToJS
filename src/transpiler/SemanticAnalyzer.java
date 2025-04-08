@@ -21,6 +21,7 @@ public class SemanticAnalyzer{
         } else if (stmt instanceof  BlockStmt blockStmt){
             analyzeBlockStmt(blockStmt);
         }
+        
     }
 
     public void analyzeBlockStmt(BlockStmt blockStmt){
@@ -29,6 +30,8 @@ public class SemanticAnalyzer{
         for (Stmt stmt : blockStmt.getStatements()){
             analyze(stmt);
         }
+
+        symbolTable.exitScope();
     }
 
     private boolean isValidConditionType(String type) {
@@ -112,6 +115,8 @@ public class SemanticAnalyzer{
             return analyzeAssignmentExpr(assignmentExpr); 
         } else if (expr instanceof BinaryExpr binaryExpr) {
             return analyzeBinaryExpr(binaryExpr); // Call binary expression analysis
+        } else if (expr instanceof UnaryExpr unaryExpr) {
+            return analyzeUnaryExpr(unaryExpr);
         }
         throw new RuntimeException("Unsupported expression type");
     }
@@ -174,5 +179,26 @@ public class SemanticAnalyzer{
         }
 
         throw new RuntimeException("Cannot coerce type " + exprType + " to boolean");
+    }
+
+    private String analyzeUnaryExpr(UnaryExpr expr){
+        String right = analyzeExpression(expr.getRight());
+        String operator = expr.getOperator().getValue();
+
+        switch (operator){
+            case "-":
+                if(!right.equals("int") && !right.equals("float")){
+                    throw new RuntimeException("Unary '-' operator requires a numeric operand");
+                }
+                return right;
+            
+            case "!":
+                if(!right.equals("boolean")){
+                    throw new RuntimeException("Unary '!' operator requires a boolean operand");
+                }
+                return "boolean";
+            default:
+                throw new RuntimeException("Unsupported unary operator: " + operator);
+        }
     }
 }
