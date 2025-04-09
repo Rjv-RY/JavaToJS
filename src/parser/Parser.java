@@ -400,11 +400,11 @@ class Parser{
     }
 
     private Expr parseTerm(){
-        Expr expr = parseFactor();
+        Expr expr = parseMultiplicative();
 
         while (peek() != null && (peek().getType() == TokenType.PLUS || peek().getType() == TokenType.MINUS)){
             Token operator = consume(peek().getType(), "Expected '+' or '-'");
-            Expr right = parseFactor();
+            Expr right = parseMultiplicative();
             expr = new BinaryExpr(expr, operator, right);
         }
         return expr;
@@ -412,12 +412,14 @@ class Parser{
 
     private Expr parseFactor(){
         Token curr = peek();
+
+        //unary handling
         if (curr.getType() == TokenType.MINUS || curr.getType() == TokenType.PLUS || curr.getType() == TokenType.NOT){
             Token operator = consume(curr.getType(), "Expected unary operator");
             Expr right = parseFactor();
             return new UnaryExpr(operator, right);
-        }
-
+        } 
+        //prefix inc/dec handling 
         else if (curr.getType() == TokenType.INCREMENT || curr.getType() == TokenType.DECREMENT){
             Token operator = consume(curr.getType(), "Expected increment/decrement");
             if (peek().getType() != TokenType.IDENTIFIER) {
@@ -426,17 +428,23 @@ class Parser{
             Token variable = consume(TokenType.IDENTIFIER, "Expected variable name");
             return new UnaryExpr(operator, new VariableExpr(variable.getValue()));
         }
-
+        //handle non-unary
         Expr expr = parsePrimary();
 
+        //handle postfix
         if (peek() != null && (peek().getType() == TokenType.INCREMENT || peek().getType() == TokenType.DECREMENT)){
             Token operator = consume(peek().getType(), "Expected postfix operator");
-            return new PostfixExpr(expr, operator); 
+            expr = new PostfixExpr(expr, operator);
         }
+        return expr;
+    }
 
-        while(peek() != null && (peek().getType() == TokenType.MULTIPLY|| peek().getType() == TokenType.DIVIDE)){
+    private Expr parseMultiplicative() {
+        Expr expr = parseFactor();
+    
+        while (peek() != null && (peek().getType() == TokenType.MULTIPLY || peek().getType() == TokenType.DIVIDE)) {
             Token operator = consume(peek().getType(), "Expected '*' or '/'");
-            Expr right = parsePrimary();
+            Expr right = parseFactor();
             expr = new BinaryExpr(expr, operator, right);
         }
         return expr;
@@ -490,7 +498,7 @@ class Parser{
     }
 
     public static void main(String[] args) {
-        String sourceCode = "int result = -x + ++y * (z--); ";
+        String sourceCode = "int result = -x + ++y * z--;";
         Lexer lexer = new Lexer(sourceCode);
         lexer.tokenize();
 
