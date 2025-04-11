@@ -466,6 +466,10 @@ class Parser{
                 consume(TokenType.FLOAT_LITERALS, "Expected float");
                 return new LiteralExpr(Double.parseDouble(curr.getValue())); 
 
+            case DOUBLE_LITERALS:  // Add this case
+                consume(TokenType.DOUBLE_LITERALS, "Expected double");
+                return new LiteralExpr(Double.parseDouble(curr.getValue()));
+            
             case CHAR_LITERALS:
                 consume(TokenType.CHAR_LITERALS, "Expected character literal");
                 String value = curr.getValue();
@@ -498,7 +502,7 @@ class Parser{
     }
 
     public static void main(String[] args) {
-        String sourceCode = "int result = -x + ++y * z--;";
+        String sourceCode = "++x + y--;";
         Lexer lexer = new Lexer(sourceCode);
         lexer.tokenize();
 

@@ -149,7 +149,23 @@ public class Lexer {
                 current = sourceCode.charAt(position);
             }
         }
-        tokens.add(new Token(floatPoint ? TokenType.FLOAT_LITERALS : TokenType.NUMBER_LITERALS, number.toString()));
+
+        TokenType numberType = floatPoint ? TokenType.DOUBLE_LITERALS : TokenType.NUMBER_LITERALS;
+        if (position < sourceCode.length()){
+            if(current == 'f' || current == 'F'){
+                numberType = TokenType.FLOAT_LITERALS;
+                advance();
+            } else if (current == 'd' || current == 'D'){
+                numberType = TokenType.DOUBLE_LITERALS;
+                advance();
+            } else {
+                numberType = floatPoint ? TokenType.DOUBLE_LITERALS : TokenType.NUMBER_LITERALS;
+            }
+        } else {
+            numberType = floatPoint ? TokenType.DOUBLE_LITERALS : TokenType.NUMBER_LITERALS;
+        }
+
+        tokens.add(new Token(numberType, number.toString()));
     }
 
     private void scanIdentifier() {
