@@ -70,14 +70,14 @@ class Parser{
         if (curr.getType() == TokenType.NUMBER_LITERALS){
             double num = Double.parseDouble(curr.getValue());
             consume(TokenType.NUMBER_LITERALS, "Not a Number");
-            return new LiteralExpr(num);
+            return new LiteralExpr(num, TokenType.NUMBER_LITERALS);
         } else if (curr.getType() == TokenType.STRING_LITERALS){
             consume(TokenType.STRING_LITERALS, "Not a String");
-            return new LiteralExpr((curr.getValue()));
+            return new LiteralExpr(curr.getValue(), TokenType.STRING_LITERALS);
         } else if (curr.getType() == TokenType.CHAR_LITERALS){
             char chr = curr.getValue().charAt(0);
             consume(TokenType.CHAR_LITERALS, "Not a Char");
-            return new LiteralExpr(chr);
+            return new LiteralExpr(chr, TokenType.CHAR_LITERALS);
         }
         return null;
     }
@@ -279,7 +279,7 @@ class Parser{
                 }
                 elements.add(parseArrayLiteral(dimensions, depth + 1));
             } else {
-                // Prevent multiple consecutive commas
+                // prevent multiple consecutive commas
                 if (peek().getType() == TokenType.COMMA) {
                     throw new RuntimeException("Unexpected comma. Missing element before comma.");
                 }
@@ -460,15 +460,15 @@ class Parser{
             
             case NUMBER_LITERALS:
                 consume(TokenType.NUMBER_LITERALS, "Expected number");
-                return new LiteralExpr(Double.parseDouble(curr.getValue()));
+                return new LiteralExpr(Double.parseDouble(curr.getValue()), TokenType.NUMBER_LITERALS);
 
             case FLOAT_LITERALS:
                 consume(TokenType.FLOAT_LITERALS, "Expected float");
-                return new LiteralExpr(Double.parseDouble(curr.getValue())); 
+                return new LiteralExpr(Double.parseDouble(curr.getValue()), TokenType.FLOAT_LITERALS); 
 
             case DOUBLE_LITERALS:  // Add this case
                 consume(TokenType.DOUBLE_LITERALS, "Expected double");
-                return new LiteralExpr(Double.parseDouble(curr.getValue()));
+                return new LiteralExpr(Double.parseDouble(curr.getValue()), TokenType.DOUBLE_LITERALS);
             
             case CHAR_LITERALS:
                 consume(TokenType.CHAR_LITERALS, "Expected character literal");
@@ -476,15 +476,15 @@ class Parser{
                 if (value.length() != 1) {
                     throw new RuntimeException("Invalid character literal: " + value);
                 }
-                return new LiteralExpr(value.charAt(0));
+                return new LiteralExpr(value.charAt(0), TokenType.CHAR_LITERALS);
 
             case STRING_LITERALS:
                 consume(TokenType.STRING_LITERALS, "Expected string literal");
-                return new LiteralExpr(curr.getValue());
+                return new LiteralExpr(curr.getValue(), TokenType.STRING_LITERALS);
 
             case BOOLEAN_LITERALS:
                 consume(TokenType.BOOLEAN_LITERALS, "Expected boolean literal");
-                return new LiteralExpr(Boolean.parseBoolean(curr.getValue()));
+                return new LiteralExpr(Boolean.parseBoolean(curr.getValue()), TokenType.BOOLEAN_LITERALS);
             
             case LEFT_PAREN:
                 return parseGrouping();
@@ -502,7 +502,7 @@ class Parser{
     }
 
     public static void main(String[] args) {
-        String sourceCode = "++x + y--;";
+        String sourceCode = "int x = 3.14f;";
         Lexer lexer = new Lexer(sourceCode);
         lexer.tokenize();
 

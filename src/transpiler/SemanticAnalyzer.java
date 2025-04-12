@@ -1,5 +1,6 @@
 package transpiler;
 
+import lexer.TokenType;
 import parser.*;
 import parser.exprs.*;
 import parser.stmts.*;
@@ -122,11 +123,43 @@ public class SemanticAnalyzer{
     }
 
     private String inferLiteralType(LiteralExpr expr){
-        String value = String.valueOf(expr.getValue());
-        if (value.matches("\\d+")) return "int";
-        if (value.matches("\\d+\\.\\d+")) return "float";
-        if (value.equals("true") || value.equals("false")) return "boolean";
-        return "string";
+        TokenType type = expr.getTokenType();
+
+        // String value = String.valueOf(expr.getValue());
+        // if (value.matches("\\d+")) return "int";
+        // if (value.matches("\\d+\\.\\d+")) return "float";
+        // if (value.equals("true") || value.equals("false")) return "boolean";
+        // return "string";
+
+        switch (type) {
+            case NUMBER_LITERALS:
+                return "int";
+            case FLOAT_LITERALS:
+                return "float";
+            case DOUBLE_LITERALS:
+                return "double";
+            case CHAR_LITERALS:
+                return "char";
+            case STRING_LITERALS:
+                return "string";
+            case BOOLEAN_LITERALS:
+                return "boolean";
+            default:
+                return inferTypeFromValue(expr.getValue());
+        }
+    }
+
+    private String inferTypeFromValue(Object value){
+        if (value instanceof Double){
+            return ((Double)value == Math.floor((Double)value)) ? "int" : "float";
+        } else if (value instanceof Boolean){
+            return "boolean";
+        } else if (value instanceof Character){
+            return "char";
+        } else if (value instanceof String){
+            return "string";
+        }
+        throw new RuntimeException("Unknown literal type: " + value.getClass());
     }
 
     private void analyzeIfStmt(IfStmt stmt){
