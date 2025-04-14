@@ -36,17 +36,17 @@ public class SemanticAnalyzer{
     }
 
     private boolean isValidConditionType(String type) {
-        // Define which types can be implicitly converted to boolean
         switch (type) {
             case "boolean":
-                return true; // Already a boolean, no conversion needed
+                return true; // already a boolean, no conversion
             case "int":
+                return true;
             case "float":
-                return true; // Numeric types (0 = false, anything else = true)
+                return true; // numeric types (0 = false, anything else = true)
             case "string":
-                return true; // String types (empty = false, non-empty = true)
+                return true; // string types (empty = false, non-empty = true)
             default:
-                return false; // Other types can't be converted
+                return false; // other types, invalid
         }
     }
 
@@ -89,18 +89,54 @@ public class SemanticAnalyzer{
         throw new RuntimeException("Unsupported binary operator: " + operator);
     }
 
+    //needs testing, THROUGHLY
     private void analyzeVarStmt(VarStmt stmt){
         String varName = stmt.getName().getValue();
         String varType = stmt.getType().getValue();
+        boolean isArray = stmt.isArray();
 
         symbolTable.declareVariable(varName, varType);
 
-        if(stmt.getInitialzer() != null){
-            String inferredType = analyzeExpression(stmt.getInitialzer()); // Get the inferred type
-            if (!inferredType.equals(varType)) {
+        if (stmt.getInitialzer() != null){
+            Expr initializer = stmt.getInitialzer();
+            String inferredType = analyzeExpression(initializer);
+
+            if (initializer instanceof NewArrayExpr newArrayExpr){
+                String arrayBaseType = newArrayExpr.getType().getValue();
+                if (!arrayBaseType.equals(varType)){
+                    throw new RuntimeException("Array type mismatch: variable declared as " + varType + "[] but initialized with " + arrayBaseType + "[]");
+                }
+                int declaredDimensions = isArray ? 1 : 0;
+                int initializerDimensions = newArrayExpr.getDimensions().size();
+            
+                if (declaredDimensions > 0 && declaredDimensions != initializerDimensions) {
+                    throw new RuntimeException("Array dimension mismatch: variable declared with " + declaredDimensions + " dimensions but initialized with " + initializerDimensions + " dimensions");
+                }
+            } else if (initializer instanceof ArrayLiteralExpr) {
+                if (!isArray){
+                    throw new RuntimeException("Cannot initialize non-array variable with array literal");
+                }
+                if(!inferredType.endsWith("[]")){
+                    throw new RuntimeException("Expected array type but got " + inferredType);
+                }
+
+                String inferredBaseType = inferredType.substring(0, inferredType.length() - 2);
+                if(!inferredBaseType.equals(varType)){
+                    throw new RuntimeException("Array type mismatch: expected " + varType + "[] but got " + inferredBaseType + "[]");
+                }
+            } else if (isArray){
+                throw new RuntimeException("Array variable must be initialized with array expression");
+            } else if (!inferredType.equals(varType)) {
                 throw new RuntimeException("Type mismatch: expected " + varType + " but got " + inferredType);
             }
         }
+
+        // if(stmt.getInitialzer() != null){
+        //     String inferredType = analyzeExpression(stmt.getInitialzer()); // Get the inferred type
+        //     if (!inferredType.equals(varType)) {
+        //         throw new RuntimeException("Type mismatch: expected " + varType + " but got " + inferredType);
+        //     }
+        // }
     }
 
     private String analyzeExpression(Expr expr) {
@@ -118,18 +154,16 @@ public class SemanticAnalyzer{
             return analyzeBinaryExpr(binaryExpr); // Call binary expression analysis
         } else if (expr instanceof UnaryExpr unaryExpr) {
             return analyzeUnaryExpr(unaryExpr);
+        } else if (expr instanceof ArrayLiteralExpr arrayLiteralExpr) {
+            return analyzeArrayLiteralExpr(arrayLiteralExpr);
+        } else if (expr instanceof NewArrayExpr newArrayExpr) {
+            return analyzeNewArrayExpr(newArrayExpr);
         }
         throw new RuntimeException("Unsupported expression type");
     }
 
     private String inferLiteralType(LiteralExpr expr){
         TokenType type = expr.getTokenType();
-
-        // String value = String.valueOf(expr.getValue());
-        // if (value.matches("\\d+")) return "int";
-        // if (value.matches("\\d+\\.\\d+")) return "float";
-        // if (value.equals("true") || value.equals("false")) return "boolean";
-        // return "string";
 
         switch (type) {
             case NUMBER_LITERALS:
@@ -233,5 +267,40 @@ public class SemanticAnalyzer{
             default:
                 throw new RuntimeException("Unsupported unary operator: " + operator);
         }
+    }
+
+    private String analyzeArrayLiteralExpr(ArrayLiteralExpr expr){
+        String elementType = null;
+
+        for (Expr element : expr.getElements()){
+            String currentType = analyzeExpression(element);
+
+            if (elementType == null){
+                elementType = currentType;
+            } else if (!elementType.equals(currentType)){
+                throw new RuntimeException("Inconsistent types in array literal: " + elementType + " and " + currentType);
+            }
+        }
+        return elementType + "[]";
+    }
+
+    private String analyzeNewArrayExpr(NewArrayExpr expr){
+        String baseType = expr.getType().getValue();
+
+        for (Expr dimension : expr.getDimensions()){
+            if (dimension != null){
+                String dimensionType = analyzeExpression(dimension);
+                if (!dimensionType.equals("int")){
+                    throw new RuntimeException("Array dimension must be an integer");
+                }
+            }
+        }
+
+        String arrayType = baseType;
+        for (int i  = 0; i < expr.getDimensions().size(); i++){
+            arrayType += "[]";
+        }
+
+        return arrayType;
     }
 }
