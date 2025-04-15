@@ -12,6 +12,7 @@ public class SemanticAnalyzer{
         this.symbolTable = new SymbolTable();
     }
 
+    //for statements(stmt)
     public void analyze(Stmt stmt) {
         if (stmt instanceof VarStmt varStmt){
             analyzeVarStmt(varStmt);
@@ -21,9 +22,43 @@ public class SemanticAnalyzer{
             analyzeWhileStmt(whileStmt);
         } else if (stmt instanceof  BlockStmt blockStmt){
             analyzeBlockStmt(blockStmt);
+        } else if (stmt instanceof PrintStmt printStmt){
+            analyzePrintStmt(printStmt);
+        } else if (stmt instanceof  ExprStmt exprStmt){
+            analyzeExprStmt(exprStmt);
         }
-        
     }
+
+    // for expressions (exprs)
+    private String analyzeExpression(Expr expr) {
+        if (expr instanceof LiteralExpr literalExpr) {
+            return inferLiteralType(literalExpr);
+        } else if (expr instanceof VariableExpr variableExpr) {
+            String varName = variableExpr.getVar();
+            if (!symbolTable.isDeclared(varName)) {
+                throw new RuntimeException("Undeclared variable: " + varName);
+            }
+            return symbolTable.getVariableType(varName); // Retrieve stored type
+        } else if (expr instanceof AssignmentExpr assignmentExpr) {
+            return analyzeAssignmentExpr(assignmentExpr); 
+        } else if (expr instanceof BinaryExpr binaryExpr) {
+            return analyzeBinaryExpr(binaryExpr); // Call binary expression analysis
+        } else if (expr instanceof UnaryExpr unaryExpr) {
+            return analyzeUnaryExpr(unaryExpr);
+        } else if (expr instanceof ArrayLiteralExpr arrayLiteralExpr) {
+            return analyzeArrayLiteralExpr(arrayLiteralExpr);
+        } else if (expr instanceof NewArrayExpr newArrayExpr) {
+            return analyzeNewArrayExpr(newArrayExpr);
+        } else if (expr instanceof GroupingExpr groupingExpr){
+            return analyzeGroupingExpr(groupingExpr);
+        } else if (expr instanceof PostfixExpr postfixExpr){
+            return analyzePostfixExpr(postfixExpr);
+        }
+        throw new RuntimeException("Unsupported expression type");
+    }
+
+//STMTS AHEAD
+//!!STATEMENTS COUNTY!!
 
     public void analyzeBlockStmt(BlockStmt blockStmt){
         symbolTable.enterScope();
@@ -48,45 +83,6 @@ public class SemanticAnalyzer{
             default:
                 return false; // other types, invalid
         }
-    }
-
-    private String analyzeAssignmentExpr(AssignmentExpr expr){
-        String varName = expr.getName().getValue();
-        if (!symbolTable.isDeclared(varName)){
-            throw new RuntimeException("Undeclared variable: " + varName);
-        }
-    
-        String expectedType = symbolTable.getVariableType(varName);
-        String inferredType = analyzeExpression(expr.getRight()); // Get inferred type
-    
-        if (!expectedType.equals(inferredType)) {
-            throw new RuntimeException("Type mismatch: expected " + expectedType + " but got " + inferredType);
-        }
-        return expectedType;
-    }
-
-    private String analyzeBinaryExpr(BinaryExpr expr){
-        String leftType = analyzeExpression(expr.getLeft());
-        String rightType = analyzeExpression(expr.getRight());
-        String operator = expr.getOperator().getValue();
-
-        if (operator.equals("&&") || operator.equals("||")){
-            if (!leftType.equals("boolean") || !rightType.equals("boolean")){
-                throw new RuntimeException("Logical operators require boolean operands");
-            }
-            return "boolean";
-        } else if (operator.matches("<|<=|>|>=")){
-            if (!(leftType.equals("int") || leftType.equals("float")) || !(rightType.equals("int") || rightType.equals("float"))){
-                throw new RuntimeException("Comparison operators require numeric operands");
-            }
-            return "boolean";
-        } else if (operator.matches("\\+|\\-|\\*|\\/")) {
-            if (!leftType.equals("int") && !leftType.equals("float") || !rightType.equals("int") && !rightType.equals("float")) {
-                throw new RuntimeException("Arithmetic operators require numeric operands");
-            }
-            return (leftType.equals("float") || rightType.equals("float")) ? "float" : "int"; // Preserve type promotion
-        }
-        throw new RuntimeException("Unsupported binary operator: " + operator);
     }
 
     //needs testing, THROUGHLY
@@ -137,29 +133,6 @@ public class SemanticAnalyzer{
         //         throw new RuntimeException("Type mismatch: expected " + varType + " but got " + inferredType);
         //     }
         // }
-    }
-
-    private String analyzeExpression(Expr expr) {
-        if (expr instanceof LiteralExpr literalExpr) {
-            return inferLiteralType(literalExpr);
-        } else if (expr instanceof VariableExpr variableExpr) {
-            String varName = variableExpr.getVar();
-            if (!symbolTable.isDeclared(varName)) {
-                throw new RuntimeException("Undeclared variable: " + varName);
-            }
-            return symbolTable.getVariableType(varName); // Retrieve stored type
-        } else if (expr instanceof AssignmentExpr assignmentExpr) {
-            return analyzeAssignmentExpr(assignmentExpr); 
-        } else if (expr instanceof BinaryExpr binaryExpr) {
-            return analyzeBinaryExpr(binaryExpr); // Call binary expression analysis
-        } else if (expr instanceof UnaryExpr unaryExpr) {
-            return analyzeUnaryExpr(unaryExpr);
-        } else if (expr instanceof ArrayLiteralExpr arrayLiteralExpr) {
-            return analyzeArrayLiteralExpr(arrayLiteralExpr);
-        } else if (expr instanceof NewArrayExpr newArrayExpr) {
-            return analyzeNewArrayExpr(newArrayExpr);
-        }
-        throw new RuntimeException("Unsupported expression type");
     }
 
     private String inferLiteralType(LiteralExpr expr){
@@ -232,6 +205,22 @@ public class SemanticAnalyzer{
         symbolTable.exitScope();
     }
 
+    private void analyzeExprStmt(ExprStmt stmt){
+        try {
+            analyzeExpression(stmt.getExpr());
+        } catch (Exception e) {
+            throw new RuntimeException("Error in expression statement: " + e.getMessage());
+        }
+    }
+
+    private void analyzePrintStmt(PrintStmt stmt){
+        try {
+            analyzeExpression(stmt.getExpr());
+        } catch (Exception e) {
+            throw new RuntimeException("Error in print statement: " + e.getMessage());
+        }  
+    }
+
     private String coerceExpressionToBoolean(Expr expr, String exprType){
         if (exprType.equals("boolean")){
             return exprType;
@@ -247,6 +236,11 @@ public class SemanticAnalyzer{
 
         throw new RuntimeException("Cannot coerce type " + exprType + " to boolean");
     }
+
+
+//EXPRS AHEAD
+//!!EXPRESSIONS LAND!!
+
 
     private String analyzeUnaryExpr(UnaryExpr expr){
         String right = analyzeExpression(expr.getRight());
@@ -266,6 +260,36 @@ public class SemanticAnalyzer{
                 return "boolean";
             default:
                 throw new RuntimeException("Unsupported unary operator: " + operator);
+        }
+    }
+
+    private String analyzePostfixExpr (PostfixExpr expr){
+        String leftType = analyzeExpression(expr.getOperand());
+
+        if (!(expr.getOperand() instanceof VariableExpr)){
+            throw new RuntimeException("Postfix operator can only be applied to vars.");
+        }
+
+        String operator = expr.getOperator().getValue();
+
+        switch (operator){
+            case "++":
+            case "--":
+                if (!leftType.equals("int") && !leftType.equals("float")){
+                    throw new RuntimeException("Postfix operator '" + operator + "' requires a numeric operand.");
+                }
+
+                return leftType;
+            default:
+                throw new RuntimeException("Unsupported postfix operator: " + operator);
+        }        
+    }
+
+    private String analyzeGroupingExpr(GroupingExpr expr){
+        try {
+            return analyzeExpression(expr.getExpr());
+        } catch (Exception e) {
+            throw new RuntimeException("Error in grouping expression: " + e.getMessage()); 
         }
     }
 
@@ -303,4 +327,44 @@ public class SemanticAnalyzer{
 
         return arrayType;
     }
+
+    private String analyzeAssignmentExpr(AssignmentExpr expr){
+        String varName = expr.getName().getValue();
+        if (!symbolTable.isDeclared(varName)){
+            throw new RuntimeException("Undeclared variable: " + varName);
+        }
+    
+        String expectedType = symbolTable.getVariableType(varName);
+        String inferredType = analyzeExpression(expr.getRight()); // Get inferred type
+    
+        if (!expectedType.equals(inferredType)) {
+            throw new RuntimeException("Type mismatch: expected " + expectedType + " but got " + inferredType);
+        }
+        return expectedType;
+    }
+
+    private String analyzeBinaryExpr(BinaryExpr expr){
+        String leftType = analyzeExpression(expr.getLeft());
+        String rightType = analyzeExpression(expr.getRight());
+        String operator = expr.getOperator().getValue();
+
+        if (operator.equals("&&") || operator.equals("||")){
+            if (!leftType.equals("boolean") || !rightType.equals("boolean")){
+                throw new RuntimeException("Logical operators require boolean operands");
+            }
+            return "boolean";
+        } else if (operator.matches("<|<=|>|>=")){
+            if (!(leftType.equals("int") || leftType.equals("float")) || !(rightType.equals("int") || rightType.equals("float"))){
+                throw new RuntimeException("Comparison operators require numeric operands");
+            }
+            return "boolean";
+        } else if (operator.matches("\\+|\\-|\\*|\\/")) {
+            if (!leftType.equals("int") && !leftType.equals("float") || !rightType.equals("int") && !rightType.equals("float")) {
+                throw new RuntimeException("Arithmetic operators require numeric operands");
+            }
+            return (leftType.equals("float") || rightType.equals("float")) ? "float" : "int"; // Preserve type promotion
+        }
+        throw new RuntimeException("Unsupported binary operator: " + operator);
+    }
+
 }
