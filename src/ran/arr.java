@@ -1,5 +1,4 @@
 
-//wanted to see if I still can. guess I can
 public class arr {
 
     public static int find2nd (int[] arr){
@@ -16,10 +15,29 @@ public class arr {
         return l2;
     }
 
+    public static String wordRev (String str){
+        StringBuilder bufferString = new StringBuilder();
+        StringBuilder revWhole = new StringBuilder();
+        for (int i = str.length() - 1; i >= 0; i--) {
+            if (str.charAt(i) == ' '){
+                revWhole.append(bufferString.reverse());
+                revWhole.append(' ');
+                bufferString = new StringBuilder();
+            } else {
+                bufferString.append(str.charAt(i));
+            }
+        }
+        revWhole.append(bufferString.reverse());
+        return revWhole.toString();
+    }
+
     public static void main(String[] args) {
-        int[] arr = new int[]{1, 21, 5, 7, 2, 9, 5, 12, 2, 17, 9, 21};
+        // int[] arr = new int[]{1, 21, 5, 7, 2, 9, 5, 12, 2, 17, 9, 21};
     
-        int num = find2nd(arr);
-        System.out.println(num);
+        // int num = find2nd(arr);
+        // System.out.println(num);
+    
+        String a = wordRev("hello world this is java");
+        System.out.println(a);
     }
 }

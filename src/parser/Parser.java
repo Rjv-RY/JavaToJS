@@ -10,12 +10,20 @@ import lexer.TokenType;
 import parser.exprs.*;
 import parser.stmts.*;
 
-class Parser{
+public class Parser{
     private List<Token> tokens;
     private int current = 0;
 
     public Parser(List<Token> tokens){
         this.tokens = tokens;
+    }
+
+    public List<Stmt> parse(){
+        List<Stmt> statements = new ArrayList<>();
+        while (!isAtEnd()) {
+            statements.add(parseStatement());
+        }
+        return statements;
     }
 
     public Token peek(){
@@ -494,7 +502,7 @@ class Parser{
         }
     }
 
-    public Expr parseGrouping(){
+    private Expr parseGrouping(){
         consume(TokenType.LEFT_PAREN, "Expected '(' at start of grouping.");
         Expr inner = parseExpression();
         consume(TokenType.RIGHT_PAREN, "Expected ')' to close grouping.");
