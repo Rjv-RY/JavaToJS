@@ -12,7 +12,7 @@ public class AnalyzerTests {
     }
 
     private static void testValidExpression(){
-        String code = "float x = 3.14f;";
+        String code =  "int[] nums = new int[true];";
         analyzeAndExpectSuccess(code);
     }
 
