@@ -14,7 +14,6 @@ public class SymbolTable {
         this.scopes = new HashMap<>();
         this.scopeStack = new Stack<>();
         this.scopeCounter = 0;
-        
         // Create global scope
         enterScope();
     }
@@ -38,7 +37,6 @@ public class SymbolTable {
         if (currentScopeVars.containsKey(name)) {
             throw new RuntimeException("Variable '" + name + "' is already declared in this scope.");
         }
-        
         currentScopeVars.put(name, type);
     }
 
@@ -64,7 +62,6 @@ public class SymbolTable {
                 return true;
             }
         }
-        
         return false;
     }
 }

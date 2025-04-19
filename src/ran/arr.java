@@ -1,4 +1,9 @@
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+
 public class arr {
 
     public static int find2nd (int[] arr){
@@ -31,13 +36,47 @@ public class arr {
         return revWhole.toString();
     }
 
+    public static Boolean palindroming (String str){
+        str = str.replaceAll("[^a-zA-Z]", "");
+        char[] arr = str.toLowerCase().toCharArray();
+        char[] arr2 = new char[arr.length];
+
+        for (int i = 0, j = arr.length - 1; i < arr.length; i++, j--){
+            arr2[j] = arr[i];
+        }
+
+        return Arrays.equals(arr, arr2);
+    }
+
+    public static char noRep1 (String str){
+        char[] arr = str.toLowerCase().toCharArray();
+        Map<Character, Integer> map = new HashMap<>();
+
+        for (char c : arr){
+            map.put(c, map.getOrDefault(c, 0) + 1);
+        }
+
+        for (char c : arr) {
+            if (map.get(c) == 1) {
+                return c;
+            }
+        }
+        return '?';
+    }
+
     public static void main(String[] args) {
         // int[] arr = new int[]{1, 21, 5, 7, 2, 9, 5, 12, 2, 17, 9, 21};
     
         // int num = find2nd(arr);
         // System.out.println(num);
     
-        String a = wordRev("hello world this is java");
-        System.out.println(a);
+        // String a = wordRev("hello world this is java");
+        // System.out.println(a);
+
+        // boolean p = palindroming("A man, a plan, a canal: Panama");
+        // System.out.println(p);
+
+        char c = noRep1("rogor");
+        System.out.println(c);
     }
 }
