@@ -26,7 +26,7 @@ public class CodeGenerator {
                     builder.append("\"").append(value).append("\"");
                     break;
                 case FLOAT:
-                    builder.append(value).append("f"); // optional, depending on whether you want to retain 'f'
+                    builder.append(value).append("f");
                     break;
                 case BOOLEAN:
                     builder.append(value);
@@ -40,26 +40,71 @@ public class CodeGenerator {
 
         } else if (expr instanceof VariableExpr var) {
             builder.append(var.getVar());
-
         } else if (expr instanceof BinaryExpr bin) {
             builder.append("(");
             emitExpr(bin.getLeft());
             builder.append(" ").append(bin.getOperator().getValue()).append(" ");
             emitExpr(bin.getRight());
             builder.append(")");
+        } else if (expr instanceof UnaryExpr unary) {
+            builder.append("(");
+            builder.append(unary.getOperator().getValue());
+            emitExpr(unary.getRight());
+            builder.append(")");
+        } else if (expr instanceof AssignmentExpr assign) {
+            builder.append(assign.getName().getValue())
+                   .append(" ")
+                   .append(assign.getAssign().getValue()) // should usually be "="
+                   .append(" ");
+            emitExpr(assign.getRight());
+        } else if (expr instanceof ArrayLiteralExpr arrayLit) {
+            builder.append("[");
+            List<Expr> elements = arrayLit.getElements();
+            for (int i = 0; i < elements.size(); i++) {
+                emitExpr(elements.get(i));
+                if (i < elements.size() - 1) builder.append(", ");
+            }
+            builder.append("]");
         }
     }
 
     private void emitStmt(Stmt stmt){
         if (stmt instanceof VarStmt varStmt) {
-            builder.append("let ")
-                   .append(varStmt.getName().getValue())
-                   .append(" = ");
-            emitExpr(varStmt.getInitialzer());
+            builder.append("let ").append(varStmt.getName().getValue());
+            Expr initializer = varStmt.getInitialzer();
+            if (initializer != null) {
+                builder.append(" = ");
+                emitExpr(initializer);
+            }
             builder.append(";\n");
-        } else if (stmt instanceof ExprStmt exprStmt) {
+        }else if (stmt instanceof ExprStmt exprStmt) {
             emitExpr(exprStmt.getExpr());
             builder.append(";\n");
+        } else if (stmt instanceof BlockStmt block) {
+            builder.append("{\n");
+            for (Stmt s : block.getStatements()) {
+                emitStmt(s);
+            }
+            builder.append("}\n");
+        } else if (stmt instanceof IfStmt ifStmt) {
+            builder.append("if (");
+            emitExpr(ifStmt.getCondition());
+            builder.append(") ");
+            emitStmt(ifStmt.getThenBranch());
+        
+            if (ifStmt.getElseBranch() != null) {
+                builder.append(" else ");
+                emitStmt(ifStmt.getElseBranch());
+            }
+        } else if (stmt instanceof PrintStmt printStmt) {
+            builder.append("console.log(");
+            emitExpr(printStmt.getExpr());
+            builder.append(");\n");
+        } else if (stmt instanceof WhileStmt whileStmt) {
+            builder.append("while (");
+            emitExpr(whileStmt.getCondition());
+            builder.append(") ");
+            emitStmt(whileStmt.getBody());
         }
     }
 }
