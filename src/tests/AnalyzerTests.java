@@ -1,5 +1,6 @@
 package tests;
 
+import codegen.*;
 import java.util.List;
 import lexer.*;
 import parser.*;
@@ -12,7 +13,7 @@ public class AnalyzerTests {
     }
 
     private static void testValidExpression(){
-        String code =  "int[] nums = new int[true];";
+        String code =  "int x = 5 + 3;";
         analyzeAndExpectSuccess(code);
     }
 
@@ -23,8 +24,12 @@ public class AnalyzerTests {
 
     private static void analyzeAndExpectSuccess(String code){
         try {
-            runAnalyzer(code);
+            List<Stmt> statements = runAnalyzer(code);
+            CodeGenerator generator = new CodeGenerator();
+            String jsCode = generator.generate(statements);
+
             System.out.println("✔ Test passed");
+            System.out.println("Generated JS:\n" + jsCode);
         } catch (Exception e) {
             System.out.println("❌ Test failed: Unexpected error: " + e.getMessage());
         }
@@ -39,13 +44,16 @@ public class AnalyzerTests {
         }  
     }
 
-    private static void runAnalyzer(String code){
+    private static List<Stmt> runAnalyzer(String code){
         Lexer lexer = new Lexer(code);
         lexer.tokenize();
         List<Token> tokens = lexer.getTokens();
+        System.out.println(tokens);
         Parser parser = new Parser(tokens);
         List<Stmt> statements = parser.parse();
         Analyzer analyzer = new Analyzer();
         analyzer.analyze(statements);
+
+        return statements;
     }
 }

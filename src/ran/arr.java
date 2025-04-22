@@ -64,6 +64,34 @@ public class arr {
         return '?';
     }
 
+    public static Boolean anagrmChek(String str1, String str2){
+        str1 = str1.replaceAll("[^a-zA-Z]", "");
+        str2 = str2.replaceAll("[^a-zA-Z]", "");
+
+        if (str1.length() != str2.length()) return false;
+
+        char[] arr1 = str1.toLowerCase().toCharArray();
+        Map<Character, Integer> str1Map = new HashMap<>();
+
+        char[] arr2 = str2.toLowerCase().toCharArray();
+        Map<Character, Integer> str2Map = new HashMap<>();
+
+        for (int i = 0; i < arr1.length; i++) {
+            char c1 = arr1[i];
+            char c2 = arr2[i];
+            str1Map.put(c1, str1Map.getOrDefault(c1, 0) + 1);
+            str2Map.put(c2, str2Map.getOrDefault(c2, 0) + 1);
+        }
+        if(str1Map.size() != str2Map.size()) return false;
+
+        for(Character key : str1Map.keySet()){
+            if (!str2Map.containsKey(key)) return false;
+            if (!str1Map.get(key).equals(str2Map.get(key))) return false;
+        }
+
+        return true;
+    }
+
     public static void main(String[] args) {
         // int[] arr = new int[]{1, 21, 5, 7, 2, 9, 5, 12, 2, 17, 9, 21};
     
@@ -76,7 +104,10 @@ public class arr {
         // boolean p = palindroming("A man, a plan, a canal: Panama");
         // System.out.println(p);
 
-        char c = noRep1("rogor");
-        System.out.println(c);
+        // char c = noRep1("rogor");
+        // System.out.println(c);
+
+        boolean anagramYorN = anagrmChek("Lis tten to", "Stiletton");
+        System.out.println(anagramYorN);
     }
 }

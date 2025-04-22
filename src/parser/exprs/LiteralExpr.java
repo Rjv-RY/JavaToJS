@@ -7,7 +7,6 @@ public class LiteralExpr extends Expr{
     private final Object value;
     private final TokenType tokenType;
     
-
     public LiteralExpr(Object value, TokenType tokenType){
         this.value = value;
         this.tokenType = tokenType;

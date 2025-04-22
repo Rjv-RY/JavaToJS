@@ -398,7 +398,7 @@ public class Lexer {
     public static void main(String[] args) {
 
         String sourceCode = "int[] arr = {1, 2, 3, 4};\n"
-             + "int[][] matrix = new int[3][3];\n"
+             + "String a = \"\\awooo\";\n"
              + "arr[2] = 42;";
 
         Lexer lexer = new Lexer(sourceCode);
