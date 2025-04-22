@@ -92,6 +92,51 @@ public class arr {
         return true;
     }
 
+    public static String stringCompressor(String str){
+        str = str.replaceAll("[^a-zA-Z]", "");
+        char[] arr = str.toLowerCase().toCharArray();
+        StringBuilder comStr = new StringBuilder();
+        int c = 1;
+
+        for (int i = 0; i < arr.length; i++){
+            if (i < arr.length - 1 && arr[i] == arr[i + 1]){
+                c++;
+            } else {
+                if (c > 1){
+                    comStr.append(arr[i]);
+                    comStr.append(c);
+                    c = 1;
+                } else {
+                    comStr.append(arr[i]);
+                    c = 1;
+                }
+            }
+        }
+        return comStr.toString();
+    }
+
+    public static String stringCompressor2(String str){
+        str = str.replaceAll("[^a-zA-Z]", "");
+        StringBuilder comStr = new StringBuilder();
+        int c = 1;
+
+        for (int i = 0; i < str.length(); i++){
+            if (i < str.length() - 1 && str.charAt(i) == str.charAt(i + 1)){
+                c++;
+            } else {
+                if (c > 1){
+                    comStr.append(str.charAt(i));
+                    comStr.append(c);
+                    c = 1;
+                } else {
+                    comStr.append(str.charAt(i));
+                    c = 1;
+                }
+            }
+        }
+        return comStr.toString();
+    }
+
     public static void main(String[] args) {
         // int[] arr = new int[]{1, 21, 5, 7, 2, 9, 5, 12, 2, 17, 9, 21};
     
@@ -107,7 +152,13 @@ public class arr {
         // char c = noRep1("rogor");
         // System.out.println(c);
 
-        boolean anagramYorN = anagrmChek("Lis tten to", "Stiletton");
-        System.out.println(anagramYorN);
+        // boolean anagramYorN = anagrmChek("Lis tten to", "Stiletton");
+        // System.out.println(anagramYorN);
+
+        String ans = stringCompressor("aaacccgeala");
+        System.out.println(ans);
+
+        String ans2 = stringCompressor2("aaacccgeala");
+        System.out.println(ans2);
     }
 }
