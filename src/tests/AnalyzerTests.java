@@ -13,9 +13,7 @@ public class AnalyzerTests {
     }
 
     private static void testValidExpression(){
-        String code =  "int[] arr = {1, 2, 3};\r\n" + //
-                        "int x;\r\n" + //
-                        "x = 7;";
+        String code =  "int i = (-4);";
         analyzeAndExpectSuccess(code);
     }
 

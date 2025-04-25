@@ -16,6 +16,20 @@ public class CodeGenerator {
         return builder.toString();
     }
 
+    private String generateMultiDimArray(List<Expr> dims, int index) {
+        StringBuilder arr = new StringBuilder();
+        arr.append("Array(");
+        emitExpr(dims.get(index));
+        arr.append(").fill(");
+        if (index + 1 < dims.size()) {
+            arr.append(generateMultiDimArray(dims, index + 1));
+        } else {
+            arr.append("null");
+        }
+        arr.append(")");
+        return arr.toString();
+    }
+
     private void emitExpr(Expr expr) {
         if (expr instanceof LiteralExpr lit) {
             Object value = lit.getValue();
@@ -65,6 +79,24 @@ public class CodeGenerator {
                 if (i < elements.size() - 1) builder.append(", ");
             }
             builder.append("]");
+        } else if (expr instanceof PostfixExpr post) {
+            emitExpr(post.getOperand());
+            builder.append(post.getOperator().getValue()); // "++" or "--"
+        } else if (expr instanceof GroupingExpr group) {
+            builder.append("(");
+            emitExpr(group.getExpr());
+            builder.append(")");
+        } else if (expr instanceof NewArrayExpr newArr) {
+            List<Expr> dims = newArr.getDimensions();
+            if (dims.size() == 1) {
+                //1D arrays
+                builder.append("Array(");
+                emitExpr(dims.get(0));
+                builder.append(").fill(null)");
+            } else {
+                //Mult-D arrays
+                builder.append(generateMultiDimArray(dims, 0));
+            }
         }
     }
 
