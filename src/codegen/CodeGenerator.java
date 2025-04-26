@@ -68,7 +68,7 @@ public class CodeGenerator {
         } else if (expr instanceof AssignmentExpr assign) {
             builder.append(assign.getName().getValue())
                    .append(" ")
-                   .append(assign.getAssign().getValue()) // should usually be "="
+                   .append(assign.getAssign().getValue()) // should usually be '='
                    .append(" ");
             emitExpr(assign.getRight());
         } else if (expr instanceof ArrayLiteralExpr arrayLit) {
@@ -81,7 +81,7 @@ public class CodeGenerator {
             builder.append("]");
         } else if (expr instanceof PostfixExpr post) {
             emitExpr(post.getOperand());
-            builder.append(post.getOperator().getValue()); // "++" or "--"
+            builder.append(post.getOperator().getValue()); // '++' or '--'
         } else if (expr instanceof GroupingExpr group) {
             builder.append("(");
             emitExpr(group.getExpr());

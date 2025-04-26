@@ -91,48 +91,45 @@ public class SemanticAnalyzer{
         String varType = stmt.getType().getValue();
         boolean isArray = stmt.isArray();
 
-        symbolTable.declareVariable(varName, varType);
+        String fullType = isArray ? varType + "[]" : varType;
+        symbolTable.declareVariable(varName, fullType);
 
         if (stmt.getInitialzer() != null){
             Expr initializer = stmt.getInitialzer();
             String inferredType = analyzeExpression(initializer);
 
-            if (initializer instanceof NewArrayExpr newArrayExpr){
-                String arrayBaseType = newArrayExpr.getType().getValue();
-                if (!arrayBaseType.equals(varType)){
-                    throw new RuntimeException("Array type mismatch: variable declared as " + varType + "[] but initialized with " + arrayBaseType + "[]");
+            if (initializer instanceof NewArrayExpr){
+                // Handle array initialization with new
+                if (!isArray) {
+                    throw new RuntimeException("Cannot initialize non-array variable with array expression");
                 }
-                int declaredDimensions = isArray ? 1 : 0;
-                int initializerDimensions = newArrayExpr.getDimensions().size();
-            
-                if (declaredDimensions > 0 && declaredDimensions != initializerDimensions) {
-                    throw new RuntimeException("Array dimension mismatch: variable declared with " + declaredDimensions + " dimensions but initialized with " + initializerDimensions + " dimensions");
+                
+                String arrayBaseType = ((NewArrayExpr)initializer).getType().getValue();
+                if (!arrayBaseType.equals(varType)){
+                    throw new RuntimeException("Array type mismatch: variable declared as " + varType + 
+                                              "[] but initialized with " + arrayBaseType + "[]");
                 }
             } else if (initializer instanceof ArrayLiteralExpr) {
+                // handle array initialization with literal
                 if (!isArray){
                     throw new RuntimeException("Cannot initialize non-array variable with array literal");
                 }
-                if(!inferredType.endsWith("[]")){
+                
+                if (!inferredType.endsWith("[]")){
                     throw new RuntimeException("Expected array type but got " + inferredType);
                 }
-
+    
                 String inferredBaseType = inferredType.substring(0, inferredType.length() - 2);
-                if(!inferredBaseType.equals(varType)){
-                    throw new RuntimeException("Array type mismatch: expected " + varType + "[] but got " + inferredBaseType + "[]");
+                if (!inferredBaseType.equals(varType)){
+                    throw new RuntimeException("Array type mismatch: expected " + varType + 
+                                              "[] but got " + inferredBaseType + "[]");
                 }
-            } else if (isArray){
+            } else if (isArray) {
                 throw new RuntimeException("Array variable must be initialized with array expression");
             } else if (!inferredType.equals(varType)) {
                 throw new RuntimeException("Type mismatch: expected " + varType + " but got " + inferredType);
             }
         }
-
-        // if(stmt.getInitialzer() != null){
-        //     String inferredType = analyzeExpression(stmt.getInitialzer()); // Get the inferred type
-        //     if (!inferredType.equals(varType)) {
-        //         throw new RuntimeException("Type mismatch: expected " + varType + " but got " + inferredType);
-        //     }
-        // }
     }
 
     private String inferLiteralType(LiteralExpr expr){
@@ -258,6 +255,17 @@ public class SemanticAnalyzer{
                     throw new RuntimeException("Unary '!' operator requires a boolean operand");
                 }
                 return "boolean";
+
+            case "++":
+            case "--":
+                if (!right.equals("int") && !right.equals("float")){
+                    throw new RuntimeException("Prefix increment/decrement operator requires a numeric operand");
+                }
+                if (!(expr.getRight() instanceof VariableExpr)){
+                    throw new RuntimeException("Prefix increment/decrement can only be applied to variables");
+                }
+                return right;
+
             default:
                 throw new RuntimeException("Unsupported unary operator: " + operator);
         }
@@ -320,12 +328,12 @@ public class SemanticAnalyzer{
             }
         }
 
-        String arrayType = baseType;
+        StringBuilder arrayType = new StringBuilder(baseType);
         for (int i  = 0; i < expr.getDimensions().size(); i++){
-            arrayType += "[]";
+            arrayType.append("[]");
         }
 
-        return arrayType;
+        return arrayType.toString();
     }
 
     private String analyzeAssignmentExpr(AssignmentExpr expr){
@@ -335,8 +343,44 @@ public class SemanticAnalyzer{
         }
     
         String expectedType = symbolTable.getVariableType(varName);
-        String inferredType = analyzeExpression(expr.getRight()); // Get inferred type
-    
+        String inferredType = analyzeExpression(expr.getRight());
+        
+        //for array assignment
+        if (expectedType.endsWith("[]")) {
+            // array vars
+            if (expr.getRight() instanceof NewArrayExpr) {
+                // get basetype from array type (like "int" from "int[]")
+                String expectedBaseType = expectedType.substring(0, expectedType.length() - 2);
+                String inferredBaseType;
+                
+                // check inferredType also ends with "[]"
+                if (inferredType.endsWith("[]")) {
+                    inferredBaseType = inferredType.substring(0, inferredType.length() - 2);
+                } else {
+                    //no array notation in inferredType, use as base type
+                    inferredBaseType = inferredType;
+                }
+                
+                // base types match?
+                if (!expectedBaseType.equals(inferredBaseType)) {
+                    throw new RuntimeException("Array type mismatch: expected " + expectedType + " but got " + inferredBaseType + "[]");
+                }
+                return expectedType;
+            } else if (expr.getRight() instanceof ArrayLiteralExpr) {
+                // validation for array literals
+                if (!inferredType.endsWith("[]")) {
+                    throw new RuntimeException("Expected array type " + expectedType + " but got " + inferredType);
+                }
+                
+                String inferredBaseType = inferredType.substring(0, inferredType.length() - 2);
+                String expectedBaseType = expectedType.substring(0, expectedType.length() - 2);
+                
+                if (!expectedBaseType.equals(inferredBaseType)) {
+                    throw new RuntimeException("Array type mismatch: expected " + expectedType + " but got " + inferredType);
+                }
+                return expectedType;
+            }
+        }
         if (!expectedType.equals(inferredType)) {
             throw new RuntimeException("Type mismatch: expected " + expectedType + " but got " + inferredType);
         }

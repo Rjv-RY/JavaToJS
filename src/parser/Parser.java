@@ -104,7 +104,7 @@ public class Parser{
     }
 
     private static final Set<TokenType> TYPE_TOKENS = EnumSet.of(
-    TokenType.INT, TokenType.FLOAT, TokenType.BOOLEAN, TokenType.CHAR
+    TokenType.INT, TokenType.FLOAT, TokenType.BOOLEAN, TokenType.CHAR, TokenType.STRING_LITERALS
     );
 
     private boolean isType(Token token) {
@@ -322,8 +322,14 @@ public class Parser{
     }
 
     private Expr parseNewArray(){
+        //debugger, remove later
+        System.out.println("Entering parseNewArray");
         consume(TokenType.NEW, "Expected 'new' keyword for array allocation");
-        Token type = consume(TokenType.INT, "Expected type after new");
+        if (!isType(peek())) {
+            throw new RuntimeException("Expected type after 'new', got " + peek().getType());
+        }
+        
+        Token type = consume(peek().getType(), "Expected type after new");
 
         List<Expr> dimensions = new ArrayList<>();
         boolean foundDimension = false;
@@ -441,6 +447,9 @@ public class Parser{
 
         //handle postfix
         if (peek() != null && (peek().getType() == TokenType.INCREMENT || peek().getType() == TokenType.DECREMENT)){
+            if (!(expr instanceof VariableExpr)){
+                throw new RuntimeException("Postfix increment/decrement can only be applied to variables");
+            }
             Token operator = consume(peek().getType(), "Expected postfix operator");
             expr = new PostfixExpr(expr, operator);
         }
@@ -460,6 +469,8 @@ public class Parser{
 
     private Expr parsePrimary(){
         Token curr = peek();
+        //debugger, remove later
+        System.out.println("Parsing primary expression, current token: " + curr.getType() + " = " + curr.getValue());
 
         switch(curr.getType()){
             case IDENTIFIER:
@@ -486,6 +497,9 @@ public class Parser{
                 }
                 return new LiteralExpr(value.charAt(0), TokenType.CHAR_LITERALS);
 
+            case NEW:
+                return parseNewArray();
+            
             case STRING_LITERALS:
                 consume(TokenType.STRING_LITERALS, "Expected string literal");
                 return new LiteralExpr(curr.getValue(), TokenType.STRING_LITERALS);
@@ -510,7 +524,8 @@ public class Parser{
     }
 
     public static void main(String[] args) {
-        String sourceCode = "int x = 3.14f;";
+        String sourceCode = "int[] i;" +
+                        "i = new int[3]";
         Lexer lexer = new Lexer(sourceCode);
         lexer.tokenize();
 
