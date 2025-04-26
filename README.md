@@ -26,6 +26,6 @@ but, it lacks for loops, function declerations, switch case, and also array inde
 ## Using this code/trying it out
 (WILL UPDATE THIS LATER, I PROMISE)
 
-## Footer/thoughts
+## Footer/Thoughts
 This undertaking was initiated due to a simple idea:-
 If I don't know how compilers work, do I even know how computers work?
