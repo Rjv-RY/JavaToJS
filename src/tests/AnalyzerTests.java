@@ -13,8 +13,7 @@ public class AnalyzerTests {
     }
 
     private static void testValidExpression(){
-        String code =  "int[] i;" +
-                        "i = new int[3];";
+        String code =  "int[][] = new int[3][3];";
         analyzeAndExpectSuccess(code);
     }
 

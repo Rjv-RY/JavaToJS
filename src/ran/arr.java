@@ -137,6 +137,22 @@ public class arr {
         return comStr.toString();
     }
 
+    public static char firstNonRep(String str){
+        str = str.replaceAll("[^a-zA-Z]", "").toLowerCase();
+        Map<Character, Integer> map = new HashMap<>();
+
+        for (int i = 0; i < str.length(); i++) {
+            map.put(str.charAt(i), map.getOrDefault(str.charAt(i), 0) + 1);
+        }
+
+        for (int i = 0; i < str.length(); i++) {
+            if (map.get(str.charAt(i)) == 1) {
+                return str.charAt(i);
+            }
+        }
+        return ' ';
+    }
+
     public static void main(String[] args) {
         // int[] arr = new int[]{1, 21, 5, 7, 2, 9, 5, 12, 2, 17, 9, 21};
     
@@ -155,10 +171,12 @@ public class arr {
         // boolean anagramYorN = anagrmChek("Lis tten to", "Stiletton");
         // System.out.println(anagramYorN);
 
-        String ans = stringCompressor("aaacccgeala");
-        System.out.println(ans);
+        // String ans = stringCompressor("aaacccgeala");
+        // System.out.println(ans);
 
-        String ans2 = stringCompressor2("aaacccgeala");
-        System.out.println(ans2);
+        // String ans2 = stringCompressor2("aaacccgeala");
+        // System.out.println(ans2);
+
+
     }
 }
