@@ -91,7 +91,12 @@ public class SemanticAnalyzer{
         String varType = stmt.getType().getValue();
         boolean isArray = stmt.isArray();
 
-        String fullType = isArray ? varType + "[]" : varType;
+        String fullType = varType;
+        if (isArray) {
+            for (int i = 0; i < stmt.getDimensions(); i++) {
+                fullType += "[]";
+            }
+        }
         symbolTable.declareVariable(varName, fullType);
 
         if (stmt.getInitialzer() != null){
@@ -99,15 +104,14 @@ public class SemanticAnalyzer{
             String inferredType = analyzeExpression(initializer);
 
             if (initializer instanceof NewArrayExpr){
-                // Handle array initialization with new
+                // handle array initialization with new
                 if (!isArray) {
                     throw new RuntimeException("Cannot initialize non-array variable with array expression");
                 }
                 
                 String arrayBaseType = ((NewArrayExpr)initializer).getType().getValue();
                 if (!arrayBaseType.equals(varType)){
-                    throw new RuntimeException("Array type mismatch: variable declared as " + varType + 
-                                              "[] but initialized with " + arrayBaseType + "[]");
+                    throw new RuntimeException("Array type mismatch: variable declared as " + varType + "[] but initialized with " + arrayBaseType + "[]");
                 }
             } else if (initializer instanceof ArrayLiteralExpr) {
                 // handle array initialization with literal
@@ -121,8 +125,7 @@ public class SemanticAnalyzer{
     
                 String inferredBaseType = inferredType.substring(0, inferredType.length() - 2);
                 if (!inferredBaseType.equals(varType)){
-                    throw new RuntimeException("Array type mismatch: expected " + varType + 
-                                              "[] but got " + inferredBaseType + "[]");
+                    throw new RuntimeException("Array type mismatch: expected " + varType +  "[] but got " + inferredBaseType + "[]");
                 }
             } else if (isArray) {
                 throw new RuntimeException("Array variable must be initialized with array expression");
@@ -237,7 +240,6 @@ public class SemanticAnalyzer{
 
 //EXPRS AHEAD
 //!!EXPRESSIONS LAND!!
-
 
     private String analyzeUnaryExpr(UnaryExpr expr){
         String right = analyzeExpression(expr.getRight());

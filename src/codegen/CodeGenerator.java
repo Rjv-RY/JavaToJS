@@ -17,24 +17,39 @@ public class CodeGenerator {
     }
 
     private String generateMultiDimArray(List<Expr> dims, int index) {
-        StringBuilder arr = new StringBuilder();
-        arr.append("Array(");
-        emitExpr(dims.get(index));
-        arr.append(").fill(");
-        if (index + 1 < dims.size()) {
-            arr.append(generateMultiDimArray(dims, index + 1));
-        } else {
-            arr.append("null");
+        StringBuilder result = new StringBuilder();
+
+        if (index >= dims.size()){
+            result.append("null");
+            return result.toString();
         }
-        arr.append(")");
-        return arr.toString();
+        // save builder state
+        StringBuilder originalBuilder = builder;
+        StringBuilder tempBuilder = new StringBuilder();
+        builder = tempBuilder;
+
+         // get dimension val
+        emitExpr(dims.get(index));
+        String dimension = tempBuilder.toString();
+
+        builder = originalBuilder;
+
+        if (index == dims.size() - 1){
+            //create a simple array
+            result.append("Array(").append(dimension).append(").fill(null)");
+        } else {
+            //array creation with dimensions, handles recursively
+            result.append("Array(").append(dimension).append(").fill().map(() => ");
+            result.append(generateMultiDimArray(dims, index + 1));
+            result.append(")");
+        }
+        return result.toString();
     }
 
     private void emitExpr(Expr expr) {
         if (expr instanceof LiteralExpr lit) {
             Object value = lit.getValue();
             TokenType type = lit.getTokenType();
-
             switch (type) {
                 case STRING_LITERALS:
                     builder.append("\"").append(value).append("\"");
@@ -91,11 +106,23 @@ public class CodeGenerator {
             if (dims.size() == 1) {
                 //1D arrays
                 builder.append("Array(");
+
+                //save builder
+                StringBuilder tempBuilder = new StringBuilder();
+                StringBuilder oldBuilder = builder;
+                builder = tempBuilder;
+                
                 emitExpr(dims.get(0));
+
+                //restore & use dims val
+                String dimension = tempBuilder.toString();
+                builder = oldBuilder;
+                builder.append(dimension);
                 builder.append(").fill(null)");
             } else {
                 //Mult-D arrays
-                builder.append(generateMultiDimArray(dims, 0));
+                String result = generateMultiDimArray(dims, 0);
+                builder.append(result);
             }
         }
     }

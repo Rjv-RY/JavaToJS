@@ -221,11 +221,12 @@ public class Parser{
        
         List<Integer> dimensions = new ArrayList<>();
         boolean isArray = false;
+        int dimensionCount = 0;
        
         while (peek().getType() == TokenType.LEFT_BRACKET){
             consume(TokenType.LEFT_BRACKET, "Expected '[' in array declaration");
             isArray = true;
-       
+            dimensionCount++;
             if (peek().getType() == TokenType.RIGHT_BRACKET) {
                 consume(TokenType.RIGHT_BRACKET, "Expected ']' after '['");
                 dimensions.add(-1);
@@ -258,7 +259,7 @@ public class Parser{
         
         // ensure semicolon is consumed for all variable declarations
         consume(TokenType.SEMICOLON, "Expected ';' after variable declaration");
-        return new VarStmt(type, name, initializer, isArray);
+        return new VarStmt(type, name, initializer, isArray, dimensionCount);
     }
 
     //parsing arrays
