@@ -1,5 +1,5 @@
 # JavaToJS
-A minimal and raw Java to JS transpiler written in Java
+A minimal and raw Java to JS transpiler written in Java, no dependencies, no packages, lightweight.
 
 ## Overview
 This is a minimal Java to JS transpiler, it follows all the steps a compiler does from tokenizing, parsing to AST, 
