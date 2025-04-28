@@ -18,7 +18,7 @@ Currently it supports
 - unary exprs 
 - postfix exprs 
 - separate var declerations and instantiations 
-- array declerations both 1D and multi dimensional [ still a wip :,( ]
+- array declerations both 1D and multi dimensional [almost done]
 
 but, it lacks for loops, function declerations, switch case, and also array indexing.
 
