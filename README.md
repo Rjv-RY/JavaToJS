@@ -18,7 +18,11 @@ Currently it supports
 - unary exprs 
 - postfix exprs 
 - separate var declerations and instantiations 
-- array declerations both 1D and multi dimensional [almost done, only can't be declared and initiated separately]
+
+## On array support
+- array declerations both 1D and multi dimensional done using new keyword(null values filled by default)
+- arrays support int and float, not doubles yet
+- multidimensional arrays using array literals still not perfect
 
 but, it lacks for loops, function declerations, switch case, and also array indexing.
 
