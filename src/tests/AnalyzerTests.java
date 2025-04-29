@@ -11,13 +11,13 @@ public class AnalyzerTests {
         testValidExpression();
         testInvalidBinaryOperands();
     }
-
-    private static void testValidExpression(){
-        String code =  "int[][][] arr = new int[3][3][2];";
+    //implement separate declerations
+    public static void testValidExpression(){
+        String code =  "float[][] arr = {{1.0f, 2.2f}, {0.7f, 6.6f}};";
         analyzeAndExpectSuccess(code);
     }
 
-    private static void testInvalidBinaryOperands() {
+    public static void testInvalidBinaryOperands() {
         String code = "int x = 3.14;";
         analyzeAndExpectFailure(code);
     }
@@ -53,7 +53,6 @@ public class AnalyzerTests {
         List<Stmt> statements = parser.parse();
         Analyzer analyzer = new Analyzer();
         analyzer.analyze(statements);
-
         return statements;
     }
 }

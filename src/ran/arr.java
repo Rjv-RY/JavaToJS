@@ -1,6 +1,8 @@
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -153,6 +155,71 @@ public class arr {
         return ' ';
     }
 
+    public static String firstUniqueCharOrDefault(String str){
+        str = str.replaceAll("[^a-zA-Z]", "").toLowerCase();
+        Map<Character, Integer> map = new HashMap<>();
+
+        for (int i = 0; i < str.length(); i++) {
+            map.put(str.charAt(i), map.getOrDefault(str.charAt(i), 0) + 1);
+        }
+
+        for (int i = 0; i < str.length(); i++) {
+            if (map.get(str.charAt(i)) == 1) {
+                return String.valueOf(str.charAt(i));
+            }
+        }
+        return "NO_UNIQUE_CHAR";
+    }
+
+    public static String firstUniqueWord (String str){
+        List<String> wordList = sentenceBreakerWordlistMaker(str);
+        List<Map<Character, Integer>> wordMapList = new ArrayList<>();
+
+        for (int i = 0; i < wordList.size(); i++) {
+            String listWord = wordList.get(i);
+            Map<Character, Integer> wordMap = new HashMap<>();
+            for (int j = 0; j < listWord.length(); j++) {
+                wordMap.put(listWord.charAt(j), wordMap.getOrDefault(listWord.charAt(j), 0) + 1);
+            }
+            wordMapList.add(wordMap);
+        }
+
+        for (int i = 0; i < wordMapList.size(); i++){
+            boolean allUnique = true;
+            for(Character key : wordMapList.get(i).keySet()){
+                if(wordMapList.get(i).get(key) != 1){
+                    allUnique = false;
+                    break;
+                }
+            }
+            if (allUnique) {
+                return wordList.get(i);
+            }
+        }
+        return "NO_UNIQUE_WORD";
+    }
+
+    public static List<String> sentenceBreakerWordlistMaker(String str){
+        List<String> words = new ArrayList<>();
+        StringBuilder currentWord = new StringBuilder();
+
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            if (c != ' ') {
+                currentWord.append(c);
+            } else {
+                if (currentWord.length() > 0) {
+                    words.add(currentWord.toString());
+                    currentWord.setLength(0); // reset StringBuilder
+                }
+            }
+        }
+        if (currentWord.length() > 0) {
+            words.add(currentWord.toString());
+        }
+        return words;
+    }
+
     public static void main(String[] args) {
         // int[] arr = new int[]{1, 21, 5, 7, 2, 9, 5, 12, 2, 17, 9, 21};
     
@@ -177,6 +244,7 @@ public class arr {
         // String ans2 = stringCompressor2("aaacccgeala");
         // System.out.println(ans2);
 
-
+        String str = firstUniqueWord("the quick brown fox jumps over the lazy dog");
+        System.out.println(str);
     }
 }

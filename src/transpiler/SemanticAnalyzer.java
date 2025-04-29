@@ -93,7 +93,8 @@ public class SemanticAnalyzer{
 
         String fullType = varType;
         if (isArray) {
-            for (int i = 0; i < stmt.getDimensions(); i++) {
+            int dimensions = stmt.getDimensions();
+            for (int i = 0; i < dimensions; i++) {
                 fullType += "[]";
             }
         }
@@ -118,15 +119,21 @@ public class SemanticAnalyzer{
                 if (!isArray){
                     throw new RuntimeException("Cannot initialize non-array variable with array literal");
                 }
+                int expectedDimensions = stmt.getDimensions();
+                int actualDimensions = countArrayDimensions(inferredType);
                 
-                if (!inferredType.endsWith("[]")){
-                    throw new RuntimeException("Expected array type but got " + inferredType);
+                // Extract the base types for comparison (without [])
+                String baseVarType = varType;
+                String inferredBaseType = inferredType.replaceAll("\\[\\]", "");
+                if (!baseVarType.equals(inferredBaseType)) {
+                    throw new RuntimeException("Array base type mismatch: expected " + baseVarType + " but got " + inferredBaseType);
                 }
-    
-                String inferredBaseType = inferredType.substring(0, inferredType.length() - 2);
-                if (!inferredBaseType.equals(varType)){
-                    throw new RuntimeException("Array type mismatch: expected " + varType +  "[] but got " + inferredBaseType + "[]");
+                // Compare dimensions
+                if (expectedDimensions != actualDimensions) {
+                    throw new RuntimeException("Array dimension mismatch: declared as " + expectedDimensions + " dimensions but initialized with " + actualDimensions + " dimensions");
                 }
+                // Types match correctly
+                return;
             } else if (isArray) {
                 throw new RuntimeException("Array variable must be initialized with array expression");
             } else if (!inferredType.equals(varType)) {
@@ -305,7 +312,8 @@ public class SemanticAnalyzer{
 
     private String analyzeArrayLiteralExpr(ArrayLiteralExpr expr){
         String elementType = null;
-
+        boolean hasElements = false;
+        
         for (Expr element : expr.getElements()){
             String currentType = analyzeExpression(element);
 
@@ -314,6 +322,9 @@ public class SemanticAnalyzer{
             } else if (!elementType.equals(currentType)){
                 throw new RuntimeException("Inconsistent types in array literal: " + elementType + " and " + currentType);
             }
+        }
+        if (!hasElements) {
+            return "unknown[]";  // An empty array has unknown element type
         }
         return elementType + "[]";
     }
@@ -338,6 +349,16 @@ public class SemanticAnalyzer{
         return arrayType.toString();
     }
 
+    private int countArrayDimensions(String type) {
+        int count = 0;
+        int index = 0;
+        while ((index = type.indexOf("[]", index)) != -1) {
+            count++;
+            index += 2; // Move past the current "[]"
+        }
+        return count;
+    }
+
     private String analyzeAssignmentExpr(AssignmentExpr expr){
         String varName = expr.getName().getValue();
         if (!symbolTable.isDeclared(varName)){
@@ -348,38 +369,28 @@ public class SemanticAnalyzer{
         String inferredType = analyzeExpression(expr.getRight());
         
         //for array assignment
-        if (expectedType.endsWith("[]")) {
+        if (expectedType.contains("[]")) {
             // array vars
-            if (expr.getRight() instanceof NewArrayExpr) {
-                // get basetype from array type (like "int" from "int[]")
-                String expectedBaseType = expectedType.substring(0, expectedType.length() - 2);
-                String inferredBaseType;
+            if (expr.getRight() instanceof NewArrayExpr || expr.getRight() instanceof ArrayLiteralExpr) {
+                // Extract the base type by removing all array dimensions
+                String expectedBaseType = expectedType.replaceAll("\\[\\]", "");
+                String inferredBaseType = inferredType.replaceAll("\\[\\]", "");
                 
-                // check inferredType also ends with "[]"
-                if (inferredType.endsWith("[]")) {
-                    inferredBaseType = inferredType.substring(0, inferredType.length() - 2);
-                } else {
-                    //no array notation in inferredType, use as base type
-                    inferredBaseType = inferredType;
-                }
+                // Count dimensions in both types
+                int expectedDims = countArrayDimensions(expectedType);
+                int inferredDims = countArrayDimensions(inferredType);
                 
-                // base types match?
+                // Base types must match and dimensions must be the same
                 if (!expectedBaseType.equals(inferredBaseType)) {
-                    throw new RuntimeException("Array type mismatch: expected " + expectedType + " but got " + inferredBaseType + "[]");
-                }
-                return expectedType;
-            } else if (expr.getRight() instanceof ArrayLiteralExpr) {
-                // validation for array literals
-                if (!inferredType.endsWith("[]")) {
-                    throw new RuntimeException("Expected array type " + expectedType + " but got " + inferredType);
+                    throw new RuntimeException("Array type mismatch: expected base type " + expectedBaseType + 
+                        " but got " + inferredBaseType);
                 }
                 
-                String inferredBaseType = inferredType.substring(0, inferredType.length() - 2);
-                String expectedBaseType = expectedType.substring(0, expectedType.length() - 2);
-                
-                if (!expectedBaseType.equals(inferredBaseType)) {
-                    throw new RuntimeException("Array type mismatch: expected " + expectedType + " but got " + inferredType);
+                if (expectedDims != inferredDims) {
+                    throw new RuntimeException("Array dimension mismatch: expected " + expectedDims + 
+                        " dimensions but got " + inferredDims);
                 }
+                
                 return expectedType;
             }
         }

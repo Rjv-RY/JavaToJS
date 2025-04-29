@@ -17,7 +17,7 @@ public class VarStmt extends Stmt{
         this.initializer = initializer;
         this.isArray = isArray;
 
-        this.dimensions = isArray ? 1 : 0;
+        this.dimensions = dimensions;
     }
 
     public int getDimensions() {
