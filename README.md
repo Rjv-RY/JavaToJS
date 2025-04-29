@@ -24,11 +24,10 @@ Currently it supports
 - arrays support int and float, not doubles yet
 - multidimensional arrays using array literals still not perfect
 
-but, it lacks for loops, function declerations, switch case, and also array indexing.
-
+The rest will be implemented sometime in the future, this is a (relatively) complete MVP.
 
 ## Using this code/trying it out
-(WILL UPDATE THIS LATER, I PROMISE)
+-download the code in your preferred manner, zip or using command line.
 
 ## Footer/Thoughts
 This undertaking was initiated due to a simple idea:-
