@@ -27,7 +27,12 @@ Currently it supports
 The rest will be implemented sometime in the future, this is a (relatively) complete MVP.
 
 ## Using this code/trying it out
--download the code in your preferred manner, zip, command line, ssh etc.
+- download the code in your preferred manner, zip, command line, ssh etc.
+- preferably have Java 16+ installed, along with some extensions to run Java code (or compile each time).
+- in Main.java, go to "testValidExpression" function, in the "code" variable, pass your string/code, then run the main function.
+- You should get the output/error in console accordingly.
+
+- Feel free to make changes to your version as you see fit. 
 
 ## Footer/Thoughts
 This undertaking was initiated due to a simple idea:-
