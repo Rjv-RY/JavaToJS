@@ -27,7 +27,7 @@ Currently it supports
 The rest will be implemented sometime in the future, this is a (relatively) complete MVP.
 
 ## Using this code/trying it out
--download the code in your preferred manner, zip or using command line.
+-download the code in your preferred manner, zip, command line, ssh etc.
 
 ## Footer/Thoughts
 This undertaking was initiated due to a simple idea:-
