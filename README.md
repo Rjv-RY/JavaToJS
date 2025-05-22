@@ -49,7 +49,7 @@ This project was built to understand compiler design, Java programming/workflow,
 4. Run the main function to transpile the code. Ideally your IDE could run it natively without a separate complete compilation step in the foreground.
 5. View the generated JavaScript output or any errors in the console.
 
-(Feel free to use and make changes to thsi code/your version as you see fit, add features, test cases, add more tokens etc, please go ham on it)
+(Feel free to use and make changes to this code/your version as you see fit, add features, test cases, add more tokens etc, please go ham on it)
 
 ## Why this project
 JavaToJS was born from the curiosity to understand compilers: "If I don't know how compilers work, do I even know how computers work?"
