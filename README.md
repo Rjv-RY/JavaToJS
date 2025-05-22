@@ -46,7 +46,7 @@ This project was built to understand compiler design, Java programming/workflow,
 1. Open src/Main.java in your IDE or text editor.
 2. Locate the testValidExpression function.
 3. In the code variable, input your Java code as a string (e.g., int x = 5; if (x > 0) { x = x + 1; }).
-4. Run the main function to transpile the code. Ideally your IDE could run it natively without a separate complete compilation step in the foreground.
+4. Run the main function to transpile the code. Ideally your IDE could run it natively without a separate complete compilation step in the foreground. (i.e. not having to Javac the whole thing)
 5. View the generated JavaScript output or any errors in the console.
 
 (Feel free to use and make changes to this code/your version as you see fit, add features, test cases, add more tokens etc, please go ham on it)
